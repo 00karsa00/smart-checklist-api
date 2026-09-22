@@ -79,28 +79,56 @@ export function validateAccountListQuery(
 
   if (status !== undefined && !VALID_ACCOUNT_STATUSES.includes(status)) {
     return next(
-      validationError(`Query param 'status' must be one of: ${VALID_ACCOUNT_STATUSES.join(", ")}.`),
+      new AppError(
+        400,
+        ERROR_CODES.INVALID_ACCOUNT_STATUS,
+        `Query param 'status' must be one of: ${VALID_ACCOUNT_STATUSES.join(", ")}.`,
+      ),
     );
   }
 
   if (type !== undefined && !VALID_ACCOUNT_TYPES.includes(type)) {
     return next(
-      validationError(`Query param 'type' must be one of: ${VALID_ACCOUNT_TYPES.join(", ")}.`),
+      new AppError(
+        400,
+        ERROR_CODES.INVALID_ACCOUNT_TYPE,
+        `Query param 'type' must be one of: ${VALID_ACCOUNT_TYPES.join(", ")}.`,
+      ),
     );
   }
+
+  // 'bank' and 'search' are free-text filters — no format constraints.
 
   next();
 }
 
 // ── Body validators ───────────────────────────────────────────────────────────
 
+function isNullableNonEmptyString(value: unknown): boolean {
+  return value === null || isNonEmptyString(value);
+}
+
+function isNullableDate(value: unknown): boolean {
+  return value === null || isValidDate(value);
+}
+
 export function validateCreateAccount(
   req: Request,
   _res: Response,
   next: NextFunction,
 ): void {
-  const { accountName, bank, accountNumber, customerNumber, ifsc, type, openingDate, currentBalance } =
-    req.body ?? {};
+  const body = (req.body ?? {}) as Record<string, unknown>;
+  const {
+    accountName, bank, accountNumber, customerNumber, ifsc,
+    type, status, openingDate, closingDate, currentBalance,
+  } = body;
+
+  // Ownership / identity fields must never be supplied by the client.
+  for (const forbidden of ["id", "userId", "accountId"]) {
+    if (body[forbidden] !== undefined) {
+      return next(validationError(`Field '${forbidden}' cannot be set by the client.`));
+    }
+  }
 
   if (!isNonEmptyString(accountName)) {
     return next(validationError("Field 'accountName' is required and must be a non-empty string."));
@@ -110,33 +138,58 @@ export function validateCreateAccount(
     return next(validationError("Field 'bank' is required and must be a non-empty string."));
   }
 
-  if (!isNonEmptyString(accountNumber)) {
-    return next(validationError("Field 'accountNumber' is required and must be a non-empty string."));
-  }
-
-  if (!VALID_ACCOUNT_TYPES.includes(type)) {
+  if (!VALID_ACCOUNT_TYPES.includes(type as string)) {
     return next(
-      validationError(`Field 'type' is required and must be one of: ${VALID_ACCOUNT_TYPES.join(", ")}.`),
+      new AppError(
+        400,
+        ERROR_CODES.INVALID_ACCOUNT_TYPE,
+        `Field 'type' is required and must be one of: ${VALID_ACCOUNT_TYPES.join(", ")}.`,
+      ),
     );
   }
 
-  if (!isValidDate(openingDate)) {
+  if (status !== undefined && !VALID_ACCOUNT_STATUSES.includes(status as string)) {
     return next(
-      validationError("Field 'openingDate' is required and must be a valid date in YYYY-MM-DD format."),
+      new AppError(
+        400,
+        ERROR_CODES.INVALID_ACCOUNT_STATUS,
+        `Field 'status' must be one of: ${VALID_ACCOUNT_STATUSES.join(", ")}.`,
+      ),
     );
   }
 
-  if (customerNumber !== undefined && !isNonEmptyString(customerNumber)) {
-    return next(validationError("Field 'customerNumber' must be a non-empty string."));
+  if (accountNumber !== undefined && !isNullableNonEmptyString(accountNumber)) {
+    return next(validationError("Field 'accountNumber' must be a non-empty string or null."));
   }
 
-  if (ifsc !== undefined && !isNonEmptyString(ifsc)) {
-    return next(validationError("Field 'ifsc' must be a non-empty string."));
+  if (customerNumber !== undefined && !isNullableNonEmptyString(customerNumber)) {
+    return next(validationError("Field 'customerNumber' must be a non-empty string or null."));
+  }
+
+  if (ifsc !== undefined && !isNullableNonEmptyString(ifsc)) {
+    return next(validationError("Field 'ifsc' must be a non-empty string or null."));
+  }
+
+  if (openingDate !== undefined && !isNullableDate(openingDate)) {
+    return next(
+      validationError("Field 'openingDate' must be a valid date in YYYY-MM-DD format or null."),
+    );
+  }
+
+  if (closingDate !== undefined && !isNullableDate(closingDate)) {
+    return next(
+      validationError("Field 'closingDate' must be a valid date in YYYY-MM-DD format or null."),
+    );
   }
 
   if (currentBalance !== undefined && !isNonNegativeNumber(currentBalance)) {
     return next(validationError("Field 'currentBalance' must be a non-negative number."));
   }
+
+  // ── Normalisation ─────────────────────────────────────────────────────────
+  if (typeof ifsc === "string") req.body.ifsc = ifsc.trim().toUpperCase();
+  if (typeof type === "string") req.body.type = type.trim().toLowerCase();
+  if (typeof status === "string") req.body.status = status.trim().toLowerCase();
 
   next();
 }
@@ -146,20 +199,32 @@ export function validateUpdateAccount(
   _res: Response,
   next: NextFunction,
 ): void {
+  const body = (req.body ?? {}) as Record<string, unknown>;
   const {
     accountName, bank, accountNumber, customerNumber, ifsc,
-    type, status, openingDate, closingDate, currentBalance,
-  } = req.body ?? {};
+    type, status, openingDate, closingDate,
+  } = body;
+
+  // Immutable / owner fields cannot be changed through the update API.
+  for (const forbidden of ["id", "userId", "accountId", "currentBalance"]) {
+    if (body[forbidden] !== undefined) {
+      return next(
+        validationError(
+          `Field '${forbidden}' cannot be updated through this endpoint.`,
+        ),
+      );
+    }
+  }
 
   const hasAtLeastOne = [
     accountName, bank, accountNumber, customerNumber, ifsc,
-    type, status, openingDate, closingDate, currentBalance,
+    type, status, openingDate, closingDate,
   ].some((v) => v !== undefined);
 
   if (!hasAtLeastOne) {
     return next(
       validationError(
-        "Request body must include at least one of: 'accountName', 'bank', 'accountNumber', 'customerNumber', 'ifsc', 'type', 'status', 'openingDate', 'closingDate', 'currentBalance'.",
+        "Request body must include at least one of: 'accountName', 'bank', 'accountNumber', 'customerNumber', 'ifsc', 'type', 'status', 'openingDate', 'closingDate'.",
       ),
     );
   }
@@ -172,45 +237,58 @@ export function validateUpdateAccount(
     return next(validationError("Field 'bank' must be a non-empty string."));
   }
 
-  if (accountNumber !== undefined && !isNonEmptyString(accountNumber)) {
-    return next(validationError("Field 'accountNumber' must be a non-empty string."));
+  if (accountNumber !== undefined && !isNullableNonEmptyString(accountNumber)) {
+    return next(validationError("Field 'accountNumber' must be a non-empty string or null."));
   }
 
-  if (customerNumber !== undefined && !isNonEmptyString(customerNumber)) {
-    return next(validationError("Field 'customerNumber' must be a non-empty string."));
+  if (customerNumber !== undefined && !isNullableNonEmptyString(customerNumber)) {
+    return next(validationError("Field 'customerNumber' must be a non-empty string or null."));
   }
 
-  if (ifsc !== undefined && !isNonEmptyString(ifsc)) {
-    return next(validationError("Field 'ifsc' must be a non-empty string."));
+  if (ifsc !== undefined && !isNullableNonEmptyString(ifsc)) {
+    return next(validationError("Field 'ifsc' must be a non-empty string or null."));
   }
 
-  if (type !== undefined && !VALID_ACCOUNT_TYPES.includes(type)) {
+  if (type !== undefined && !VALID_ACCOUNT_TYPES.includes(type as string)) {
     return next(
-      validationError(`Field 'type' must be one of: ${VALID_ACCOUNT_TYPES.join(", ")}.`),
+      new AppError(
+        400,
+        ERROR_CODES.INVALID_ACCOUNT_TYPE,
+        `Field 'type' must be one of: ${VALID_ACCOUNT_TYPES.join(", ")}.`,
+      ),
     );
   }
 
-  if (status !== undefined && !VALID_ACCOUNT_STATUSES.includes(status)) {
+  if (status !== undefined && !VALID_ACCOUNT_STATUSES.includes(status as string)) {
     return next(
-      validationError(`Field 'status' must be one of: ${VALID_ACCOUNT_STATUSES.join(", ")}.`),
+      new AppError(
+        400,
+        ERROR_CODES.INVALID_ACCOUNT_STATUS,
+        `Field 'status' must be one of: ${VALID_ACCOUNT_STATUSES.join(", ")}.`,
+      ),
     );
   }
 
-  if (openingDate !== undefined && !isValidDate(openingDate)) {
-    return next(validationError("Field 'openingDate' must be a valid date in YYYY-MM-DD format."));
+  if (openingDate !== undefined && !isNullableDate(openingDate)) {
+    return next(validationError("Field 'openingDate' must be a valid date in YYYY-MM-DD format or null."));
   }
 
-  if (closingDate !== undefined && !isValidDate(closingDate)) {
-    return next(validationError("Field 'closingDate' must be a valid date in YYYY-MM-DD format."));
+  if (closingDate !== undefined && !isNullableDate(closingDate)) {
+    return next(validationError("Field 'closingDate' must be a valid date in YYYY-MM-DD format or null."));
   }
 
-  if (openingDate && closingDate && openingDate > closingDate) {
+  if (
+    typeof openingDate === "string" &&
+    typeof closingDate === "string" &&
+    openingDate > closingDate
+  ) {
     return next(validationError("Field 'openingDate' must not be after 'closingDate'."));
   }
 
-  if (currentBalance !== undefined && !isNonNegativeNumber(currentBalance)) {
-    return next(validationError("Field 'currentBalance' must be a non-negative number."));
-  }
+  // ── Normalisation ─────────────────────────────────────────────────────────
+  if (typeof ifsc === "string") req.body.ifsc = ifsc.trim().toUpperCase();
+  if (typeof type === "string") req.body.type = type.trim().toLowerCase();
+  if (typeof status === "string") req.body.status = status.trim().toLowerCase();
 
   next();
 }

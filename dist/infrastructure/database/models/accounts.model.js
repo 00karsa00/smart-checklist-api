@@ -38,6 +38,11 @@ __decorate([
     (0, sequelize_typescript_1.AllowNull)(false),
     (0, sequelize_typescript_1.Column)(sequelize_typescript_1.DataType.STRING),
     __metadata("design:type", String)
+], Account.prototype, "accountId", void 0);
+__decorate([
+    (0, sequelize_typescript_1.AllowNull)(false),
+    (0, sequelize_typescript_1.Column)(sequelize_typescript_1.DataType.STRING),
+    __metadata("design:type", String)
 ], Account.prototype, "accountName", void 0);
 __decorate([
     (0, sequelize_typescript_1.AllowNull)(false),
@@ -45,9 +50,9 @@ __decorate([
     __metadata("design:type", String)
 ], Account.prototype, "bank", void 0);
 __decorate([
-    (0, sequelize_typescript_1.AllowNull)(false),
+    (0, sequelize_typescript_1.AllowNull)(true),
     (0, sequelize_typescript_1.Column)(sequelize_typescript_1.DataType.STRING),
-    __metadata("design:type", String)
+    __metadata("design:type", Object)
 ], Account.prototype, "accountNumber", void 0);
 __decorate([
     (0, sequelize_typescript_1.AllowNull)(true),
@@ -77,9 +82,9 @@ __decorate([
     __metadata("design:type", String)
 ], Account.prototype, "currentBalance", void 0);
 __decorate([
-    (0, sequelize_typescript_1.AllowNull)(false),
+    (0, sequelize_typescript_1.AllowNull)(true),
     (0, sequelize_typescript_1.Column)(sequelize_typescript_1.DataType.DATEONLY),
-    __metadata("design:type", String)
+    __metadata("design:type", Object)
 ], Account.prototype, "openingDate", void 0);
 __decorate([
     (0, sequelize_typescript_1.AllowNull)(true),

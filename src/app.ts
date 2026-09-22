@@ -10,6 +10,7 @@ import { ERROR_CODES } from "./common/errors/error.codes";
 
 import authRoutes from "./modules/auth/auth.routes";
 import userRoutes from "./modules/user/user.routes";
+import accountRoutes from "./modules/account/account.routes";
 import transactionRoutes from "./modules/transaction/transaction.routes";
 
 const app = express();
@@ -48,6 +49,11 @@ app.use(
 app.use(
   `${configuration.app.apiPrefix}/users`,
   userRoutes,
+);
+
+app.use(
+  `${configuration.app.apiPrefix}/accounts`,
+  accountRoutes,
 );
 
 app.use(

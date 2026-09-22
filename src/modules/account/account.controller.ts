@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 
-import { ApiSuccessResponse } from "../../common/responses/api-response";
+import { ApiSuccessResponse, PaginatedData } from "../../common/responses/api-response";
 import "../../common/types/request-context.type";
 
 import {
@@ -24,8 +24,8 @@ function withRequestId<T>(
 // ── Controllers ───────────────────────────────────────────────────────────────
 
 export async function getAccounts(
-  req: Request<Record<string, never>, ApiSuccessResponse<Account[]>, never, AccountListQuery & Record<string, string | undefined>>,
-  res: Response<ApiSuccessResponse<Account[]>>,
+  req: Request<Record<string, never>, ApiSuccessResponse<PaginatedData<Account>>, never, AccountListQuery & Record<string, string | undefined>>,
+  res: Response<ApiSuccessResponse<PaginatedData<Account>>>,
   next: NextFunction,
 ): Promise<void> {
   try {
@@ -36,6 +36,8 @@ export async function getAccounts(
     const result = await accountService.getAllAccounts(userId, page, limit, {
       status: req.query.status as string | undefined,
       type: req.query.type as string | undefined,
+      bank: req.query.bank as string | undefined,
+      search: req.query.search as string | undefined,
     });
 
     res.status(200).json(withRequestId(result, req as unknown as Request));

@@ -13,6 +13,8 @@ const app_error_1 = require("./common/errors/app.error");
 const error_codes_1 = require("./common/errors/error.codes");
 const auth_routes_1 = __importDefault(require("./modules/auth/auth.routes"));
 const user_routes_1 = __importDefault(require("./modules/user/user.routes"));
+const account_routes_1 = __importDefault(require("./modules/account/account.routes"));
+const transaction_routes_1 = __importDefault(require("./modules/transaction/transaction.routes"));
 const app = (0, express_1.default)();
 app.disable("x-powered-by");
 app.use((0, cors_1.default)({
@@ -35,6 +37,8 @@ app.get(`${configuration_1.configuration.app.apiPrefix}/health`, (_req, res) => 
 });
 app.use(`${configuration_1.configuration.app.apiPrefix}/auth`, auth_routes_1.default);
 app.use(`${configuration_1.configuration.app.apiPrefix}/users`, user_routes_1.default);
+app.use(`${configuration_1.configuration.app.apiPrefix}/accounts`, account_routes_1.default);
+app.use(`${configuration_1.configuration.app.apiPrefix}/transactions`, transaction_routes_1.default);
 // 404 handler
 app.use((req, _res, next) => {
     next(new app_error_1.AppError(404, error_codes_1.ERROR_CODES.NOT_FOUND, `Route ${req.method} ${req.originalUrl} not found`));
