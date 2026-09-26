@@ -11,6 +11,7 @@ import {
 } from "./dto/transaction.dto";
 import { Transaction } from "./types/transaction.type";
 import { transactionService } from "./transaction.service";
+import { PaginatedData } from "../../common/responses/api-response";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -24,8 +25,8 @@ function withRequestId<T>(
 // ── Controllers ───────────────────────────────────────────────────────────────
 
 export async function getTransactions(
-  req: Request<Record<string, never>, ApiSuccessResponse<Transaction[]>, never, TransactionListQuery & { [key: string]: string | undefined }>,
-  res: Response<ApiSuccessResponse<Transaction[]>>,
+  req: Request<Record<string, never>, ApiSuccessResponse<PaginatedData<Transaction>>, never, TransactionListQuery & { [key: string]: string | undefined }>,
+  res: Response<ApiSuccessResponse<PaginatedData<Transaction>>>,
   next: NextFunction,
 ): Promise<void> {
   try {

@@ -2,6 +2,8 @@ import { AppError } from "../../common/errors/app.error";
 import { ERROR_CODES } from "../../common/errors/error.codes";
 import {
   ApiSuccessResponse,
+  PaginatedData,
+  buildPaginatedData,
   successResponse,
 } from "../../common/responses/api-response";
 import { Account } from "../../infrastructure/database/models/accounts.model";
@@ -24,7 +26,7 @@ class TransactionService {
     page: number,
     limit: number,
     filters: TransactionListQuery,
-  ): Promise<ApiSuccessResponse<Transaction[]>> {
+  ): Promise<ApiSuccessResponse<PaginatedData<Transaction>>> {
     const offset = (page - 1) * limit;
     const { rows, count } = await transactionRepository.findAll(
       userId,
@@ -33,12 +35,13 @@ class TransactionService {
       filters,
     );
 
-    return successResponse(rows as unknown as Transaction[], undefined, {
-      total: count,
+    const data = buildPaginatedData(rows as unknown as Transaction[], {
       page,
       limit,
-      totalPages: Math.ceil(count / limit),
+      total: count,
     });
+
+    return successResponse(data, undefined);
   }
 
   async getTransactionById(
