@@ -2,6 +2,10 @@
 
 Changes to the backend skeleton. Versions follow [Semantic Versioning](https://semver.org/): a major version may need changes in modules, minor versions add features, patch versions fix bugs.
 
+## 2.0.2 — 2026-11-03
+
+- **Test files removed** (to be rewritten later). Vitest stays configured with `passWithNoTests`, so `npm test`, `npm run check` and CI still pass; add `*.test.ts` files next to the code.
+
 ## 2.0.1 — 2026-11-03
 
 - **`type` instead of `interface`:** every object shape is a type alias (`extends` became `&`). ESLint (`consistent-type-definitions`) enforces it. No runtime change.
