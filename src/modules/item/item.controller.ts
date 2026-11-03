@@ -1,5 +1,4 @@
-import { currentUserId } from "../../common/guards/auth.guard";
-import { parsePageQuery } from "../../common/pagination";
+import { currentUserId, parsePageQuery } from "../../common";
 import { HttpContext, IdParams, NoParams } from "../../infrastructure/http";
 
 import { CreateItemDto, ItemListQuery, UpdateItemDto } from "./dto/item.dto";

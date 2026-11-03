@@ -1,4 +1,4 @@
-import { isNonEmptyString, isUuidV4, validationError } from "../../common/validation/rules";
+import { isNonEmptyString, isUuidV4, validationError } from "../../common";
 import { Guard } from "../../infrastructure/http";
 
 export const validateGenerateTokenBody: Guard = (ctx) => {

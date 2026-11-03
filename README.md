@@ -65,6 +65,7 @@ src/
 │   ├── env.ts               # reads .env and process.env
 │   └── logger.ts            # JSON logger
 ├── common/                  # shared, library-free building blocks
+│   ├── index.ts             # THE ONE IMPORT for all shared code
 │   ├── errors/              # AppError, ERROR_CODES
 │   ├── guards/              # authenticate, currentUserId, requireValidToken
 │   ├── responses/           # response envelope
@@ -109,19 +110,28 @@ one, search `src/common` and `src/infrastructure` and use what is there. If it
 needs to behave differently, change the original (or add a parameter) so every
 caller gets the change. Never copy it into a second version.
 
-| Need                                             | Single source                                                                      |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------- |
-| Validate `/:id`                                  | `idParamGuard("Entity")` in `common/validation/rules`                              |
-| Partial update needs at least one field          | `assertAtLeastOne`                                                                 |
-| Fields the client may not send                   | `rejectFields`                                                                     |
-| Check a field only when it was sent              | `assertOptional` (with `orNull(...)` to also allow null)                           |
-| UUID, date, email, number, enum checks           | `isUuid`, `isDate`, `isEmail`, `isPositiveNumber`, `isOneOf`, …                    |
-| `?page=&limit=`                                  | `assertPageQuery`, `parsePageQuery`, `pageOffset`, `buildPaginatedData`            |
-| Copy sent fields onto a record in an update      | `assignDefined` in `common/utils/assign-defined`                                   |
-| Signed-in user / token check                     | `authenticate`, `currentUserId`, `requireValidToken` in `common/guards/auth.guard` |
-| "Does this record exist and belong to the user?" | the owning service's `get…ById` (e.g. `itemService.getItemById`)                   |
-| Route param and empty types                      | `IdParams`, `NoParams` from `infrastructure/http`                                  |
-| Database query helpers                           | `containsText`, `between`, `matchAny`, `isUniqueViolation`                         |
+All shared code is imported from **one place**, the common index:
+
+```ts
+import { AppError, ERROR_CODES, currentUserId, idParamGuard, parsePageQuery } from "../../common";
+```
+
+ESLint rejects imports of files inside `common/`. To add a shared helper, put it
+in the right file under `src/common/` and export it from `src/common/index.ts`.
+
+| Need                                             | Single source                                                           |
+| ------------------------------------------------ | ----------------------------------------------------------------------- |
+| Validate `/:id`                                  | `idParamGuard("Entity")`                                                |
+| Partial update needs at least one field          | `assertAtLeastOne`                                                      |
+| Fields the client may not send                   | `rejectFields`                                                          |
+| Check a field only when it was sent              | `assertOptional` (with `orNull(...)` to also allow null)                |
+| UUID, date, email, number, enum checks           | `isUuid`, `isDate`, `isEmail`, `isPositiveNumber`, `isOneOf`, …         |
+| `?page=&limit=`                                  | `assertPageQuery`, `parsePageQuery`, `pageOffset`, `buildPaginatedData` |
+| Copy sent fields onto a record in an update      | `assignDefined`                                                         |
+| Signed-in user / token check                     | `authenticate`, `currentUserId`, `requireValidToken`                    |
+| "Does this record exist and belong to the user?" | the owning service's `get…ById` (e.g. `itemService.getItemById`)        |
+| Route param and empty types                      | `IdParams`, `NoParams` from `infrastructure/http`                       |
+| Database query helpers                           | `containsText`, `between`, `matchAny`, `isUniqueViolation`              |
 
 `npm run dup:check` (part of `npm run check` and CI) fails when two places
 contain the same block of code. Fix it by moving the code into one shared
@@ -164,7 +174,7 @@ Rules of each layer:
    - add a migration in `infrastructure/database/migrations/` (and seeders if needed);
    - replace the in-memory body of the repository with model queries, keeping
      its method names.
-3. Add the module's error codes to `common/errors/error.codes.ts`.
+3. Add the module's error codes to `src/common/errors/error.codes.ts`.
 4. Add one line to `src/modules/index.ts`.
 5. Add tests next to the code (`<name>.service.test.ts`, `<name>.validator.test.ts`).
 

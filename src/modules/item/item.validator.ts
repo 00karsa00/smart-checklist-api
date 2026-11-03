@@ -7,7 +7,7 @@ import {
   orNull,
   rejectFields,
   validationError,
-} from "../../common/validation/rules";
+} from "../../common";
 import { Guard } from "../../infrastructure/http";
 
 const MAX_NAME_LENGTH = 100;

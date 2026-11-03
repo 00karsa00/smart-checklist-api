@@ -2,6 +2,10 @@
 
 Changes to the backend skeleton. Versions follow [Semantic Versioning](https://semver.org/): a major version may need changes in modules, minor versions add features, patch versions fix bugs.
 
+## 2.1.0 — 2026-11-03
+
+- **One import for shared code:** `src/common/index.ts` exports every shared function and type. Modules import from `../../common`; ESLint rejects imports of files inside `common/`. `src/infrastructure` keeps direct imports to avoid an import cycle.
+
 ## 2.0.2 — 2026-11-03
 
 - **Test files removed** (to be rewritten later). Vitest stays configured with `passWithNoTests`, so `npm test`, `npm run check` and CI still pass; add `*.test.ts` files next to the code.

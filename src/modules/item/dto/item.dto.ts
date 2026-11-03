@@ -1,4 +1,4 @@
-import { PageQuery } from "../../../common/pagination";
+import { PageQuery } from "../../../common";
 
 // ── Request body DTOs ─────────────────────────────────────────────────────────
 //

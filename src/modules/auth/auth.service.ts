@@ -1,5 +1,5 @@
 import { configuration } from "../../config/configuration";
-import { requireValidToken } from "../../common/guards/auth.guard";
+import { requireValidToken } from "../../common";
 import { signToken } from "../../infrastructure/token";
 
 import { GenerateTokenDto, ValidateTokenDto } from "./dto/auth.dto";

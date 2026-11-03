@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { assignDefined } from "../../common/utils/assign-defined";
+import { assignDefined } from "../../common";
 
 import { CreateItemDto, UpdateItemDto } from "./dto/item.dto";
 import { Item } from "./types/item.type";

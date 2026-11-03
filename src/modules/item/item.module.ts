@@ -1,4 +1,4 @@
-import { authenticate } from "../../common/guards/auth.guard";
+import { authenticate } from "../../common";
 import { ApiModule } from "../../infrastructure/http";
 
 import { createItem, deleteItem, getItem, getItems, updateItem } from "./item.controller";

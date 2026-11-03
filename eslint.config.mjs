@@ -47,6 +47,12 @@ export default tseslint.config(
               regex: "infrastructure/(database|http)/.+",
               message: "Import from the folder's index (e.g. '../../infrastructure/database').",
             },
+            {
+              // Shared code has one entry point. (src/infrastructure is exempt:
+              // it sits below common and imports its files directly to avoid a cycle.)
+              regex: "(^|/)common/.+",
+              message: "Import shared code from the common index (e.g. '../../common').",
+            },
           ],
         },
       ],
