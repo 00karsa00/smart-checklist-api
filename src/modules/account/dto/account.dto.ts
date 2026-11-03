@@ -1,4 +1,4 @@
-import { AccountType, AccountStatus } from "../../../infrastructure/database/models/accounts.model";
+import { AccountType, AccountStatus } from "../../../common/enums/account.enum";
 
 // ── Request body DTOs ─────────────────────────────────────────────────────────
 //

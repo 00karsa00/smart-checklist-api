@@ -15,17 +15,7 @@ import {
 import { Optional } from "sequelize";
 import { User } from "./user.model";
 import { AllTransaction } from "./all-transactions.model";
-
-export enum AccountType {
-  CURRENT = "current",
-  SAVING = "saving",
-}
-
-export enum AccountStatus {
-  ACTIVE = "active",
-  INACTIVE = "inactive",
-  CLOSED = "closed",
-}
+import { AccountType, AccountStatus } from "../../../common/enums/account.enum";
 
 interface AccountAttributes {
   id: string;
@@ -45,20 +35,19 @@ interface AccountAttributes {
   updatedAt: Date;
 }
 
-interface AccountCreationAttributes
-  extends Optional<
-    AccountAttributes,
-    | "id"
-    | "accountNumber"
-    | "customerNumber"
-    | "ifsc"
-    | "status"
-    | "currentBalance"
-    | "openingDate"
-    | "closingDate"
-    | "createdAt"
-    | "updatedAt"
-  > {}
+type AccountCreationAttributes = Optional<
+  AccountAttributes,
+  | "id"
+  | "accountNumber"
+  | "customerNumber"
+  | "ifsc"
+  | "status"
+  | "currentBalance"
+  | "openingDate"
+  | "closingDate"
+  | "createdAt"
+  | "updatedAt"
+>;
 
 @Table({
   tableName: "accounts",

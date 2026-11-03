@@ -8,11 +8,7 @@ import {
   IsUUID,
   AllowNull,
   HasMany,
-  ForeignKey,
-  Index,
-  BelongsTo,
 } from "sequelize-typescript";
-import { User } from "./user.model";
 import { AllTransaction } from "./all-transactions.model";
 
 @Table({

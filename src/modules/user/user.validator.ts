@@ -1,155 +1,79 @@
-import { Request, Response, NextFunction } from "express";
+import {
+  assertPageQuery,
+  isEmail,
+  isNonEmptyString,
+  isUuid,
+  validationError,
+} from "../../common/validation/rules";
+import { Guard } from "../../infrastructure/http";
 
-import { AppError } from "../../common/errors/app.error";
-import { ERROR_CODES } from "../../common/errors/error.codes";
+const MAX_NAME_LENGTH = 100;
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// ── Params ────────────────────────────────────────────────────────────────────
 
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export const validateUserIdParam: Guard = (ctx) => {
+  const { id } = ctx.params;
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!id) throw validationError("User id is required.");
+  if (!isUuid(id)) throw validationError("User id must be a valid UUID.");
+};
 
-function isValidUuid(value: unknown): value is string {
-  return typeof value === "string" && UUID_RE.test(value);
-}
+// ── Query ─────────────────────────────────────────────────────────────────────
 
-function isValidEmail(value: unknown): value is string {
-  return typeof value === "string" && EMAIL_RE.test(value);
-}
+export const validateUserListQuery: Guard = (ctx) => {
+  assertPageQuery(ctx.query);
+};
 
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
+// ── Body ──────────────────────────────────────────────────────────────────────
 
-function validationError(message: string): AppError {
-  return new AppError(400, ERROR_CODES.VALIDATION_ERROR, message);
-}
-
-// ── Param validators ──────────────────────────────────────────────────────────
-
-/**
- * Validates :id route param for GET /users/:id, PATCH /users/:id,
- * DELETE /users/:id.
- */
-export function validateUserIdParam(
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-): void {
-  const { id } = req.params;
-
-  if (!id) {
-    return next(validationError("User id is required."));
-  }
-
-  if (!isValidUuid(id)) {
-    return next(validationError("User id must be a valid UUID."));
-  }
-
-  next();
-}
-
-// ── Query validators ──────────────────────────────────────────────────────────
-
-/**
- * Validates query params for GET /users?page=&limit=
- */
-export function validateUserListQuery(
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-): void {
-  const { page, limit } = req.query as { page?: string; limit?: string };
-
-  if (page !== undefined) {
-    const p = Number(page);
-    if (!Number.isInteger(p) || p < 1) {
-      return next(validationError("Query param 'page' must be a positive integer."));
-    }
-  }
-
-  if (limit !== undefined) {
-    const l = Number(limit);
-    if (!Number.isInteger(l) || l < 1 || l > 100) {
-      return next(validationError("Query param 'limit' must be an integer between 1 and 100."));
-    }
-  }
-
-  next();
-}
-
-// ── Body validators ───────────────────────────────────────────────────────────
-
-/**
- * Validates request body for POST /users
- */
-export function validateCreateUser(
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-): void {
-  const { name, email } = req.body ?? {};
+export const validateCreateUser: Guard = (ctx) => {
+  const { name, email } = ctx.body ?? {};
 
   if (!isNonEmptyString(name)) {
-    return next(validationError("Field 'name' is required and must be a non-empty string."));
+    throw validationError("Field 'name' is required and must be a non-empty string.");
   }
 
-  if (name.trim().length > 100) {
-    return next(validationError("Field 'name' must not exceed 100 characters."));
+  if (name.trim().length > MAX_NAME_LENGTH) {
+    throw validationError(`Field 'name' must not exceed ${MAX_NAME_LENGTH} characters.`);
   }
 
   if (!isNonEmptyString(email)) {
-    return next(validationError("Field 'email' is required and must be a non-empty string."));
+    throw validationError("Field 'email' is required and must be a non-empty string.");
   }
 
-  if (!isValidEmail(email)) {
-    return next(validationError("Field 'email' must be a valid email address."));
+  if (!isEmail(email)) {
+    throw validationError("Field 'email' must be a valid email address.");
   }
+};
 
-  next();
-}
+export const validateUpdateUser: Guard = (ctx) => {
+  const { name, email, isActive } = ctx.body ?? {};
 
-/**
- * Validates request body for PATCH /users/:id
- */
-export function validateUpdateUser(
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-): void {
-  const { name, email, isActive } = req.body ?? {};
-
-  // At least one updatable field must be present
   if (name === undefined && email === undefined && isActive === undefined) {
-    return next(
-      validationError(
-        "Request body must include at least one of: 'name', 'email', 'isActive'.",
-      ),
+    throw validationError(
+      "Request body must include at least one of: 'name', 'email', 'isActive'.",
     );
   }
 
   if (name !== undefined) {
     if (!isNonEmptyString(name)) {
-      return next(validationError("Field 'name' must be a non-empty string."));
+      throw validationError("Field 'name' must be a non-empty string.");
     }
-    if (name.trim().length > 100) {
-      return next(validationError("Field 'name' must not exceed 100 characters."));
+    if (name.trim().length > MAX_NAME_LENGTH) {
+      throw validationError(`Field 'name' must not exceed ${MAX_NAME_LENGTH} characters.`);
     }
   }
 
   if (email !== undefined) {
     if (!isNonEmptyString(email)) {
-      return next(validationError("Field 'email' must be a non-empty string."));
+      throw validationError("Field 'email' must be a non-empty string.");
     }
-    if (!isValidEmail(email)) {
-      return next(validationError("Field 'email' must be a valid email address."));
+    if (!isEmail(email)) {
+      throw validationError("Field 'email' must be a valid email address.");
     }
   }
 
   if (isActive !== undefined && typeof isActive !== "boolean") {
-    return next(validationError("Field 'isActive' must be a boolean."));
+    throw validationError("Field 'isActive' must be a boolean.");
   }
-
-  next();
-}
+};

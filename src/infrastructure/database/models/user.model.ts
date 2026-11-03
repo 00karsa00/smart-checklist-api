@@ -20,7 +20,10 @@ interface UserAttributes {
   updatedAt: Date;
 }
 
-interface UserCreationAttributes extends Optional<UserAttributes, "id" | "isActive" | "createdAt" | "updatedAt"> {}
+type UserCreationAttributes = Optional<
+  UserAttributes,
+  "id" | "isActive" | "createdAt" | "updatedAt"
+>;
 
 @Table({
   tableName: "users",

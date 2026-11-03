@@ -1,7 +1,7 @@
-import { QueryInterface, DataTypes } from 'sequelize';
+import { QueryInterface, DataTypes } from "sequelize";
 
 export async function up(queryInterface) {
-  await queryInterface.createTable('all_transactions', {
+  await queryInterface.createTable("all_transactions", {
     id: {
       type: DataTypes.UUID,
       allowNull: false,
@@ -13,11 +13,11 @@ export async function up(queryInterface) {
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: 'users',
-        key: 'id',
+        model: "users",
+        key: "id",
       },
-      onUpdate: 'CASCADE',
-      onDelete: 'CASCADE',
+      onUpdate: "CASCADE",
+      onDelete: "CASCADE",
     },
 
     transaction_date: {
@@ -39,11 +39,11 @@ export async function up(queryInterface) {
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: 'accounts',
-        key: 'id',
+        model: "accounts",
+        key: "id",
       },
-      onUpdate: 'CASCADE',
-      onDelete: 'RESTRICT',
+      onUpdate: "CASCADE",
+      onDelete: "RESTRICT",
     },
 
     payment_method: {
@@ -55,11 +55,11 @@ export async function up(queryInterface) {
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: 'transaction_types',
-        key: 'id',
+        model: "transaction_types",
+        key: "id",
       },
-      onUpdate: 'CASCADE',
-      onDelete: 'RESTRICT',
+      onUpdate: "CASCADE",
+      onDelete: "RESTRICT",
     },
 
     amount: {
@@ -90,27 +90,15 @@ export async function up(queryInterface) {
     },
   });
 
-  await queryInterface.addIndex(
-    'all_transactions',
-    ['user_id'],
-  );
+  await queryInterface.addIndex("all_transactions", ["user_id"]);
 
-  await queryInterface.addIndex(
-    'all_transactions',
-    ['user_id', 'transaction_date'],
-  );
+  await queryInterface.addIndex("all_transactions", ["user_id", "transaction_date"]);
 
-  await queryInterface.addIndex(
-    'all_transactions',
-    ['user_id', 'account_id'],
-  );
+  await queryInterface.addIndex("all_transactions", ["user_id", "account_id"]);
 
-  await queryInterface.addIndex(
-    'all_transactions',
-    ['user_id', 'transaction_type_id'],
-  );
+  await queryInterface.addIndex("all_transactions", ["user_id", "transaction_type_id"]);
 }
 
 export async function down(queryInterface) {
-  await queryInterface.dropTable('all_transactions');
+  await queryInterface.dropTable("all_transactions");
 }

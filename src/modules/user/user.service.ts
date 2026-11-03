@@ -1,10 +1,6 @@
-
 import { AppError } from "../../common/errors/app.error";
 import { ERROR_CODES } from "../../common/errors/error.codes";
-import {
-  ApiSuccessResponse,
-  successResponse,
-} from "../../common/responses/api-response";
+import { PaginatedData, buildPaginatedData } from "../../common/pagination";
 
 import { CreateUserDto, UpdateUserDto } from "./dto/user.dto";
 import { User } from "./types/user.type";
@@ -13,40 +9,29 @@ import { userRepository } from "./user.repository";
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 10;
 
+/** User business logic. Takes plain values, returns plain data. */
 class UserService {
-  
-  async getAllUsers({
-    page = DEFAULT_PAGE,
-    limit = DEFAULT_LIMIT,
-  }: { page?: number; limit?: number } = {}): Promise<ApiSuccessResponse<User[]>> {
+  async listUsers(payload: { page?: number; limit?: number } = {}): Promise<PaginatedData<User>> {
+    const page = payload.page ?? DEFAULT_PAGE;
+    const limit = payload.limit ?? DEFAULT_LIMIT;
     const offset = (page - 1) * limit;
+
     const { rows, count } = await userRepository.findAll(offset, limit);
 
-    return successResponse(rows, undefined, {
-      total: count,
-      page,
-      limit,
-      totalPages: Math.ceil(count / limit),
-    });
+    return buildPaginatedData(rows, { page, limit, total: count });
   }
 
-  async getUserById(id: string): Promise<ApiSuccessResponse<User>> {
+  async getUserById(id: string): Promise<User> {
     const user = await userRepository.findById(id);
 
     if (!user) {
-      throw new AppError(
-        404,
-        ERROR_CODES.USER_NOT_FOUND,
-        "User not found",
-      );
+      throw new AppError(404, ERROR_CODES.USER_NOT_FOUND, "User not found");
     }
 
-    return successResponse(user, undefined);
+    return user;
   }
 
-  async createUser(
-    data: CreateUserDto,
-  ): Promise<ApiSuccessResponse<User>> {
+  async createUser(data: CreateUserDto): Promise<User> {
     const existingUser = await userRepository.findByEmail(data.email);
 
     if (existingUser) {
@@ -57,23 +42,11 @@ class UserService {
       );
     }
 
-    const user = await userRepository.create(data);
-    return successResponse(user, undefined);
+    return userRepository.create(data);
   }
 
-  async updateUser(
-    id: string,
-    data: UpdateUserDto,
-  ): Promise<ApiSuccessResponse<User>> {
-    const user = await userRepository.findById(id);
-
-    if (!user) {
-      throw new AppError(
-        404,
-        ERROR_CODES.USER_NOT_FOUND,
-        "User not found",
-      );
-    }
+  async updateUser(id: string, data: UpdateUserDto): Promise<User> {
+    await this.getUserById(id);
 
     if (data.email) {
       const existingUser = await userRepository.findByEmail(data.email);
@@ -87,23 +60,13 @@ class UserService {
       }
     }
 
-    const updated = (await userRepository.update(id, data)) as User;
-    return successResponse(updated, undefined);
+    return (await userRepository.update(id, data)) as User;
   }
 
-  async deleteUser(id: string): Promise<ApiSuccessResponse<null>> {
-    const user = await userRepository.findById(id);
-
-    if (!user) {
-      throw new AppError(
-        404,
-        ERROR_CODES.USER_NOT_FOUND,
-        "User not found",
-      );
-    }
-
+  async deleteUser(id: string): Promise<null> {
+    await this.getUserById(id);
     await userRepository.delete(id);
-    return successResponse(null, undefined);
+    return null;
   }
 }
 

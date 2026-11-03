@@ -1,195 +1,124 @@
-import { Request, Response, NextFunction } from "express";
+import {
+  assertPageQuery,
+  isDate,
+  isNonEmptyString,
+  isPositiveNumber,
+  isUuid,
+  validationError,
+} from "../../common/validation/rules";
+import { Guard } from "../../infrastructure/http";
 
-import { AppError } from "../../common/errors/app.error";
-import { ERROR_CODES } from "../../common/errors/error.codes";
-
-// ── Helpers ───────────────────────────────────────────────────────────────────
-
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-
-// Matches YYYY-MM-DD
-const DATE_RE = /^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
-
-function isValidUuid(value: unknown): value is string {
-  return typeof value === "string" && UUID_RE.test(value);
-}
-
-function isValidDate(value: unknown): value is string {
-  return typeof value === "string" && DATE_RE.test(value) && !isNaN(Date.parse(value));
-}
-
-function isPositiveNumber(value: unknown): value is number {
-  return typeof value === "number" && isFinite(value) && value > 0;
-}
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
-
-function validationError(message: string): AppError {
-  return new AppError(400, ERROR_CODES.VALIDATION_ERROR, message);
-}
-
-// ── Param validators ──────────────────────────────────────────────────────────
-
-export function validateTransactionIdParam(
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-): void {
-  const { id } = req.params;
-
-  if (!id) {
-    return next(validationError("Transaction id is required."));
-  }
-
-  if (!isValidUuid(id)) {
-    return next(validationError("Transaction id must be a valid UUID."));
-  }
-
-  next();
-}
-
-// ── Query validators ──────────────────────────────────────────────────────────
-
-export function validateTransactionListQuery(
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-): void {
-  const { page, limit, accountId, transactionTypeId, startDate, endDate } =
-    req.query as Record<string, string | undefined>;
-
-  if (page !== undefined) {
-    const p = Number(page);
-    if (!Number.isInteger(p) || p < 1) {
-      return next(validationError("Query param 'page' must be a positive integer."));
+/** Optional free-text fields shared by create and update. */
+function assertOptionalTexts(body: Record<string, unknown>): void {
+  for (const field of ["paymentMethod", "remarks", "note"]) {
+    if (body[field] !== undefined && !isNonEmptyString(body[field])) {
+      throw validationError(`Field '${field}' must be a non-empty string.`);
     }
   }
+}
 
-  if (limit !== undefined) {
-    const l = Number(limit);
-    if (!Number.isInteger(l) || l < 1 || l > 100) {
-      return next(validationError("Query param 'limit' must be an integer between 1 and 100."));
-    }
+// ── Params ────────────────────────────────────────────────────────────────────
+
+export const validateTransactionIdParam: Guard = (ctx) => {
+  const { id } = ctx.params;
+
+  if (!id) throw validationError("Transaction id is required.");
+  if (!isUuid(id)) throw validationError("Transaction id must be a valid UUID.");
+};
+
+// ── Query ─────────────────────────────────────────────────────────────────────
+
+export const validateTransactionListQuery: Guard = (ctx) => {
+  const { accountId, transactionTypeId, startDate, endDate } = ctx.query as Record<
+    string,
+    string | undefined
+  >;
+
+  assertPageQuery(ctx.query);
+
+  if (accountId !== undefined && !isUuid(accountId)) {
+    throw validationError("Query param 'accountId' must be a valid UUID.");
   }
 
-  if (accountId !== undefined && !isValidUuid(accountId)) {
-    return next(validationError("Query param 'accountId' must be a valid UUID."));
+  if (transactionTypeId !== undefined && !isUuid(transactionTypeId)) {
+    throw validationError("Query param 'transactionTypeId' must be a valid UUID.");
   }
 
-  if (transactionTypeId !== undefined && !isValidUuid(transactionTypeId)) {
-    return next(validationError("Query param 'transactionTypeId' must be a valid UUID."));
+  if (startDate !== undefined && !isDate(startDate)) {
+    throw validationError("Query param 'startDate' must be a valid date in YYYY-MM-DD format.");
   }
 
-  if (startDate !== undefined && !isValidDate(startDate)) {
-    return next(validationError("Query param 'startDate' must be a valid date in YYYY-MM-DD format."));
-  }
-
-  if (endDate !== undefined && !isValidDate(endDate)) {
-    return next(validationError("Query param 'endDate' must be a valid date in YYYY-MM-DD format."));
+  if (endDate !== undefined && !isDate(endDate)) {
+    throw validationError("Query param 'endDate' must be a valid date in YYYY-MM-DD format.");
   }
 
   if (startDate && endDate && startDate > endDate) {
-    return next(validationError("Query param 'startDate' must not be after 'endDate'."));
+    throw validationError("Query param 'startDate' must not be after 'endDate'.");
   }
+};
 
-  next();
-}
+// ── Body ──────────────────────────────────────────────────────────────────────
 
-// ── Body validators ───────────────────────────────────────────────────────────
+export const validateCreateTransaction: Guard = (ctx) => {
+  const body = (ctx.body ?? {}) as Record<string, unknown>;
+  const { transactionDate, accountId, transactionTypeId, amount } = body;
 
-export function validateCreateTransaction(
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-): void {
-  const { transactionDate, accountId, transactionTypeId, amount, paymentMethod, remarks, note } =
-    req.body ?? {};
-
-  if (!isValidDate(transactionDate)) {
-    return next(
-      validationError("Field 'transactionDate' is required and must be a valid date in YYYY-MM-DD format."),
+  if (!isDate(transactionDate)) {
+    throw validationError(
+      "Field 'transactionDate' is required and must be a valid date in YYYY-MM-DD format.",
     );
   }
 
-  if (!isValidUuid(accountId)) {
-    return next(validationError("Field 'accountId' is required and must be a valid UUID."));
+  if (!isUuid(accountId)) {
+    throw validationError("Field 'accountId' is required and must be a valid UUID.");
   }
 
-  if (!isValidUuid(transactionTypeId)) {
-    return next(validationError("Field 'transactionTypeId' is required and must be a valid UUID."));
+  if (!isUuid(transactionTypeId)) {
+    throw validationError("Field 'transactionTypeId' is required and must be a valid UUID.");
   }
 
   if (!isPositiveNumber(amount)) {
-    return next(validationError("Field 'amount' is required and must be a positive number."));
+    throw validationError("Field 'amount' is required and must be a positive number.");
   }
 
-  if (paymentMethod !== undefined && !isNonEmptyString(paymentMethod)) {
-    return next(validationError("Field 'paymentMethod' must be a non-empty string."));
-  }
+  assertOptionalTexts(body);
+};
 
-  if (remarks !== undefined && !isNonEmptyString(remarks)) {
-    return next(validationError("Field 'remarks' must be a non-empty string."));
-  }
+const UPDATABLE_FIELDS = [
+  "transactionDate",
+  "accountId",
+  "transactionTypeId",
+  "amount",
+  "paymentMethod",
+  "remarks",
+  "note",
+] as const;
 
-  if (note !== undefined && !isNonEmptyString(note)) {
-    return next(validationError("Field 'note' must be a non-empty string."));
-  }
+export const validateUpdateTransaction: Guard = (ctx) => {
+  const body = (ctx.body ?? {}) as Record<string, unknown>;
+  const { transactionDate, accountId, transactionTypeId, amount } = body;
 
-  next();
-}
-
-export function validateUpdateTransaction(
-  req: Request,
-  _res: Response,
-  next: NextFunction,
-): void {
-  const { transactionDate, accountId, transactionTypeId, amount, paymentMethod, remarks, note } =
-    req.body ?? {};
-
-  const hasAtLeastOne = [
-    transactionDate, accountId, transactionTypeId, amount, paymentMethod, remarks, note,
-  ].some((v) => v !== undefined);
-
-  if (!hasAtLeastOne) {
-    return next(
-      validationError(
-        "Request body must include at least one of: 'transactionDate', 'accountId', 'transactionTypeId', 'amount', 'paymentMethod', 'remarks', 'note'.",
-      ),
+  if (!UPDATABLE_FIELDS.some((field) => body[field] !== undefined)) {
+    throw validationError(
+      `Request body must include at least one of: ${UPDATABLE_FIELDS.map((f) => `'${f}'`).join(", ")}.`,
     );
   }
 
-  if (transactionDate !== undefined && !isValidDate(transactionDate)) {
-    return next(
-      validationError("Field 'transactionDate' must be a valid date in YYYY-MM-DD format."),
-    );
+  if (transactionDate !== undefined && !isDate(transactionDate)) {
+    throw validationError("Field 'transactionDate' must be a valid date in YYYY-MM-DD format.");
   }
 
-  if (accountId !== undefined && !isValidUuid(accountId)) {
-    return next(validationError("Field 'accountId' must be a valid UUID."));
+  if (accountId !== undefined && !isUuid(accountId)) {
+    throw validationError("Field 'accountId' must be a valid UUID.");
   }
 
-  if (transactionTypeId !== undefined && !isValidUuid(transactionTypeId)) {
-    return next(validationError("Field 'transactionTypeId' must be a valid UUID."));
+  if (transactionTypeId !== undefined && !isUuid(transactionTypeId)) {
+    throw validationError("Field 'transactionTypeId' must be a valid UUID.");
   }
 
   if (amount !== undefined && !isPositiveNumber(amount)) {
-    return next(validationError("Field 'amount' must be a positive number."));
+    throw validationError("Field 'amount' must be a positive number.");
   }
 
-  if (paymentMethod !== undefined && !isNonEmptyString(paymentMethod)) {
-    return next(validationError("Field 'paymentMethod' must be a non-empty string."));
-  }
-
-  if (remarks !== undefined && !isNonEmptyString(remarks)) {
-    return next(validationError("Field 'remarks' must be a non-empty string."));
-  }
-
-  if (note !== undefined && !isNonEmptyString(note)) {
-    return next(validationError("Field 'note' must be a non-empty string."));
-  }
-
-  next();
-}
+  assertOptionalTexts(body);
+};

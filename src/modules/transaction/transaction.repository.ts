@@ -1,8 +1,10 @@
-import { Op } from "sequelize";
-
-import { AllTransaction } from "../../infrastructure/database/models/all-transactions.model";
-import { Account } from "../../infrastructure/database/models/accounts.model";
-import { TransactionType } from "../../infrastructure/database/models/transaction-types.model";
+import {
+  Account,
+  AllTransaction,
+  TransactionType,
+  Where,
+  between,
+} from "../../infrastructure/database";
 import {
   CreateTransactionDto,
   UpdateTransactionDto,
@@ -35,7 +37,7 @@ class TransactionRepository {
     limit: number,
     filters: TransactionListQuery,
   ): Promise<PaginatedTransactions> {
-    const where: Record<string, unknown> = { userId };
+    const where: Where = { userId };
 
     if (filters.accountId) {
       where["accountId"] = filters.accountId;
@@ -46,21 +48,28 @@ class TransactionRepository {
     }
 
     if (filters.startDate || filters.endDate) {
-      const dateFilter: Record<string, string> = {};
-      if (filters.startDate) dateFilter[Op.gte as unknown as string] = filters.startDate;
-      if (filters.endDate) dateFilter[Op.lte as unknown as string] = filters.endDate;
-      where["transactionDate"] = dateFilter;
+      where["transactionDate"] = between(
+        filters.startDate || undefined,
+        filters.endDate || undefined,
+      );
     }
 
     const { rows, count } = await AllTransaction.findAndCountAll({
       where,
       include: TRANSACTION_INCLUDES,
-      order: [["transactionDate", "DESC"], ["createdAt", "DESC"]],
+      order: [
+        ["transactionDate", "DESC"],
+        ["createdAt", "DESC"],
+      ],
       offset,
       limit,
     });
 
     return { rows, count };
+  }
+
+  async findTransactionTypeById(id: string): Promise<TransactionType | null> {
+    return TransactionType.findByPk(id);
   }
 
   async findById(id: string, userId: string): Promise<AllTransaction | null> {
@@ -70,10 +79,7 @@ class TransactionRepository {
     });
   }
 
-  async create(
-    data: CreateTransactionDto,
-    userId: string,
-  ): Promise<AllTransaction> {
+  async create(data: CreateTransactionDto, userId: string): Promise<AllTransaction> {
     const date = new Date(data.transactionDate);
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
@@ -112,7 +118,8 @@ class TransactionRepository {
     }
 
     if (data.accountId !== undefined) transaction.accountId = data.accountId;
-    if (data.transactionTypeId !== undefined) transaction.transactionTypeId = data.transactionTypeId;
+    if (data.transactionTypeId !== undefined)
+      transaction.transactionTypeId = data.transactionTypeId;
     if (data.amount !== undefined) transaction.amount = String(data.amount);
     if (data.paymentMethod !== undefined) transaction.paymentMethod = data.paymentMethod;
     if (data.remarks !== undefined) transaction.remarks = data.remarks;

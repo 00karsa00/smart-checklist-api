@@ -1,0 +1,62 @@
+import js from "@eslint/js";
+import tseslint from "typescript-eslint";
+
+export default tseslint.config(
+  {
+    ignores: [
+      "dist/**",
+      "coverage/**",
+      // Generated once and frozen; they run as plain CommonJS under sequelize-cli.
+      "src/infrastructure/database/migrations/**",
+      "src/infrastructure/database/seeders/**",
+    ],
+  },
+  js.configs.recommended,
+  ...tseslint.configs.recommended,
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        {
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
+          caughtErrorsIgnorePattern: "^_",
+        },
+      ],
+    },
+  },
+  // src/infrastructure is the only folder that may use third-party packages or
+  // read the environment. Everything else imports its wrappers, so swapping a
+  // library (web framework, ORM, JWT, logger) never touches business code.
+  {
+    files: ["src/**/*.ts"],
+    ignores: ["src/infrastructure/**", "src/**/*.test.ts"],
+    rules: {
+      "no-restricted-imports": [
+        "error",
+        {
+          patterns: [
+            {
+              regex: "^(?!\\.|node:)",
+              message:
+                "Third-party packages are only imported in src/infrastructure. Wrap it there and import the wrapper.",
+            },
+            {
+              regex: "infrastructure/(database|http)/.+",
+              message: "Import from the folder's index (e.g. '../../infrastructure/database').",
+            },
+          ],
+        },
+      ],
+      "no-restricted-properties": [
+        "error",
+        {
+          object: "process",
+          property: "env",
+          message: "Read settings from src/config/configuration.ts.",
+        },
+      ],
+      "no-console": ["error"],
+    },
+  },
+);

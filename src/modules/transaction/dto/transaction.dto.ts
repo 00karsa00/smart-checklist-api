@@ -1,9 +1,9 @@
 // ── Request body DTOs ─────────────────────────────────────────────────────────
 
 export interface CreateTransactionDto {
-  transactionDate: string;        // YYYY-MM-DD
-  accountId: string;              // UUID
-  transactionTypeId: string;      // UUID
+  transactionDate: string; // YYYY-MM-DD
+  accountId: string; // UUID
+  transactionTypeId: string; // UUID
   amount: number;
   paymentMethod?: string;
   remarks?: string;

@@ -3,9 +3,7 @@
 module.exports = {
   async up(queryInterface, Sequelize) {
     // Ensure PostgreSQL can generate UUIDs.
-    await queryInterface.sequelize.query(
-      'CREATE EXTENSION IF NOT EXISTS "pgcrypto";',
-    );
+    await queryInterface.sequelize.query('CREATE EXTENSION IF NOT EXISTS "pgcrypto";');
 
     // Ensure existing rows have valid timestamps.
     await queryInterface.changeColumn("users", "created_at", {
