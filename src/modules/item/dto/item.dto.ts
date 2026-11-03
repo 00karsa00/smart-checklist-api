@@ -5,16 +5,16 @@ import { PageQuery } from "../../../common/pagination";
 // `id` and `userId` are never accepted from the client: `id` is generated and
 // `userId` comes from the signed-in user.
 
-export interface CreateItemDto {
+export type CreateItemDto = {
   name: string;
   description?: string | null;
-}
+};
 
-export interface UpdateItemDto {
+export type UpdateItemDto = {
   name?: string;
   description?: string | null;
-}
+};
 
-export interface ItemListQuery extends PageQuery {
+export type ItemListQuery = {
   search?: string;
-}
+} & PageQuery;

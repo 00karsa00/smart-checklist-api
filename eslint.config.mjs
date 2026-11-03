@@ -15,6 +15,8 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   {
     rules: {
+      // Object shapes are declared with `type`, never `interface`.
+      "@typescript-eslint/consistent-type-definitions": ["error", "type"],
       "@typescript-eslint/no-unused-vars": [
         "warn",
         {

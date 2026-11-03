@@ -5,10 +5,10 @@ import { assignDefined } from "../../common/utils/assign-defined";
 import { CreateItemDto, UpdateItemDto } from "./dto/item.dto";
 import { Item } from "./types/item.type";
 
-export interface PaginatedItems {
+export type PaginatedItems = {
   rows: Item[];
   count: number;
-}
+};
 
 /**
  * Data access for items, always scoped by `userId`.

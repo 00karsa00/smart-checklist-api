@@ -2,6 +2,10 @@
 
 Changes to the backend skeleton. Versions follow [Semantic Versioning](https://semver.org/): a major version may need changes in modules, minor versions add features, patch versions fix bugs.
 
+## 2.0.1 — 2026-11-03
+
+- **`type` instead of `interface`:** every object shape is a type alias (`extends` became `&`). ESLint (`consistent-type-definitions`) enforces it. No runtime change.
+
 ## 2.0.0 — 2026-11-03
 
 The skeleton no longer contains business code. Breaking: the removed endpoints and tables are gone.

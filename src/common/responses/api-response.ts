@@ -1,29 +1,29 @@
 // The response envelope shared by every endpoint. Handlers return only `data`;
 // the HTTP layer wraps it with successResponse / errorResponse.
 
-export interface ApiMeta {
+export type ApiMeta = {
   page?: number;
   limit?: number;
   total?: number;
   totalPages?: number;
   [key: string]: unknown;
-}
+};
 
-export interface ApiSuccessResponse<T> {
+export type ApiSuccessResponse<T> = {
   success: true;
   data: T;
   meta: ApiMeta | null;
   requestId: string | undefined;
-}
+};
 
-export interface ApiErrorResponse {
+export type ApiErrorResponse = {
   success: false;
   error: {
     code: string;
     message: string;
   };
   requestId: string | undefined;
-}
+};
 
 export function successResponse<T>(
   data: T,
