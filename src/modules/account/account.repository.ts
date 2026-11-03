@@ -1,4 +1,4 @@
-import { AccountStatus, AccountType } from "../../common/enums/account.enum";
+import { AccountStatus } from "../../common/enums/account.enum";
 import {
   Account,
   AllTransaction,
@@ -6,6 +6,8 @@ import {
   containsText,
   matchAny,
 } from "../../infrastructure/database";
+import { pageOffset } from "../../common/pagination";
+import { assignDefined } from "../../common/utils/assign-defined";
 import { CreateAccountDto, UpdateAccountDto, AccountListQuery } from "./dto/account.dto";
 
 export interface PaginatedAccounts {
@@ -87,7 +89,7 @@ class AccountRepository {
     options: { page: number; limit: number; search: string | null },
   ): Promise<PaginatedAccounts> {
     const { page, limit, search } = options;
-    const offset = (page - 1) * limit;
+    const offset = pageOffset({ page, limit });
     const where: Where = {
       userId,
       status: AccountStatus.ACTIVE,
@@ -135,14 +137,16 @@ class AccountRepository {
 
     if (!account) return null;
 
-    if (data.accountName !== undefined) account.accountName = data.accountName;
-    if (data.bank !== undefined) account.bank = data.bank;
-    if (data.accountNumber !== undefined) account.accountNumber = data.accountNumber;
-    if (data.customerNumber !== undefined) account.customerNumber = data.customerNumber;
-    if (data.ifsc !== undefined) account.ifsc = data.ifsc;
-    if (data.type !== undefined) account.type = data.type as AccountType;
-    if (data.openingDate !== undefined) account.openingDate = data.openingDate;
-    if (data.closingDate !== undefined) account.closingDate = data.closingDate;
+    assignDefined(account, data, [
+      "accountName",
+      "bank",
+      "accountNumber",
+      "customerNumber",
+      "ifsc",
+      "type",
+      "openingDate",
+      "closingDate",
+    ]);
 
     if (data.status !== undefined) {
       account.status = data.status as AccountStatus;

@@ -2,6 +2,17 @@
 
 Changes to the backend skeleton. Versions follow [Semantic Versioning](https://semver.org/): a major version may need changes in modules, minor versions add features, patch versions fix bugs.
 
+## 1.1.0 — 2026-11-03
+
+One implementation for every shared helper. API responses are unchanged (verified by replaying 75 requests) except one message: `POST /api/auth/token/validate` errors now end with a period ("Invalid token.", "Token has expired."), the same as every other auth error.
+
+- **Validation helpers:** `idParamGuard`, `assertAtLeastOne`, `rejectFields`, `assertOptional`, `orNull` replace per-module copies; all three modules use them.
+- **Services reuse lookups:** account and transaction services use their own `get…ById` for existence checks; the transaction service checks account ownership through `accountService.getAccountById`.
+- **One page-offset calculation** (`pageOffset`), one partial-update helper (`assignDefined`), one sequence padder (`padSequence`), one token check (`requireValidToken`).
+- **Shared types:** `IdParams` and `NoParams` from `infrastructure/http`; list queries extend `PageQuery`.
+- **`npm run dup:check`** (jscpd) fails on duplicated code; part of `npm run check` and CI.
+- README section "Reuse before you write" lists the single source for each need.
+
 ## 1.0.0 — 2026-11-03
 
 First release.

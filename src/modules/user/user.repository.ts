@@ -1,3 +1,4 @@
+import { assignDefined } from "../../common/utils/assign-defined";
 import { User } from "../../infrastructure/database";
 
 import { CreateUserDto, UpdateUserDto } from "./dto/user.dto";
@@ -44,17 +45,8 @@ class UserRepository {
       return null;
     }
 
-    if (data.name !== undefined) {
-      user.name = data.name;
-    }
-
-    if (data.email !== undefined) {
-      user.email = data.email.toLowerCase();
-    }
-
-    if (data.isActive !== undefined) {
-      user.isActive = data.isActive;
-    }
+    assignDefined(user, data, ["name", "isActive"]);
+    if (data.email !== undefined) user.email = data.email.toLowerCase();
 
     await user.save();
 

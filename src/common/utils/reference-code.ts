@@ -38,8 +38,9 @@ export const MONTH_LETTERS = [
   "D", // Dec
 ] as const;
 
-function pad(sequence: number): string {
-  return String(sequence).padStart(SEQ_PAD_LENGTH, "0");
+/** Zero-pad a sequence number, e.g. padSequence(7, 3) -> "007". */
+export function padSequence(sequence: number, length: number = SEQ_PAD_LENGTH): string {
+  return String(sequence).padStart(length, "0");
 }
 
 /** Format a date as DDMMYYYY (matches the sheet's TEXT(date,"DDMMYYYY")). */
@@ -64,20 +65,20 @@ export function parseReferenceSequence(code: string | null | undefined): number 
 
 /** "TRAN-DDMMYYYY-000" for a given date + per-day sequence. */
 export function formatTransactionReference(date: Date, sequence: number): string {
-  return `TRAN-${formatDDMMYYYY(date)}-${pad(sequence)}`;
+  return `TRAN-${formatDDMMYYYY(date)}-${padSequence(sequence)}`;
 }
 
 /** "INC{YYYY}{Mletter}-000" for a given date + per-month sequence. */
 export function formatIncomeReference(date: Date, sequence: number): string {
-  return `INC${date.getUTCFullYear()}${monthLetter(date)}-${pad(sequence)}`;
+  return `INC${date.getUTCFullYear()}${monthLetter(date)}-${padSequence(sequence)}`;
 }
 
 /** "EXP{YYYY}{Mletter}-000" for a given date + per-month sequence. */
 export function formatExpenseReference(date: Date, sequence: number): string {
-  return `EXP${date.getUTCFullYear()}${monthLetter(date)}-${pad(sequence)}`;
+  return `EXP${date.getUTCFullYear()}${monthLetter(date)}-${padSequence(sequence)}`;
 }
 
 /** "BL-DDMMYYYY-000" for a given date + per-day sequence. */
 export function formatBorrowLendReference(date: Date, sequence: number): string {
-  return `BL-${formatDDMMYYYY(date)}-${pad(sequence)}`;
+  return `BL-${formatDDMMYYYY(date)}-${padSequence(sequence)}`;
 }

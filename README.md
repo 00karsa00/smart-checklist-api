@@ -21,18 +21,19 @@ shows how to generate one.
 
 ## Commands
 
-| Command              | What it does                                              |
-| -------------------- | --------------------------------------------------------- |
-| `npm run dev`        | Start with reload on save                                 |
-| `npm run build`      | Compile to `dist/`                                        |
-| `npm start`          | Run the compiled app                                      |
-| `npm run typecheck`  | TypeScript check                                          |
-| `npm run lint`       | ESLint, including the architecture rules below            |
-| `npm run format`     | Format with Prettier (`format:check` only checks)         |
-| `npm test`           | Unit tests (Vitest, no database needed)                   |
-| `npm run check`      | Everything CI runs: typecheck, lint, format, tests, build |
-| `npm run db:migrate` | Apply migrations (`db:migrate:undo` to roll back one)     |
-| `npm run db:seed`    | Seed data (`db:seed:undo` to remove)                      |
+| Command              | What it does                                                          |
+| -------------------- | --------------------------------------------------------------------- |
+| `npm run dev`        | Start with reload on save                                             |
+| `npm run build`      | Compile to `dist/`                                                    |
+| `npm start`          | Run the compiled app                                                  |
+| `npm run typecheck`  | TypeScript check                                                      |
+| `npm run lint`       | ESLint, including the architecture rules below                        |
+| `npm run format`     | Format with Prettier (`format:check` only checks)                     |
+| `npm test`           | Unit tests (Vitest, no database needed)                               |
+| `npm run dup:check`  | Fail if the same block of code appears in two places                  |
+| `npm run check`      | Everything CI runs: typecheck, lint, duplicates, format, tests, build |
+| `npm run db:migrate` | Apply migrations (`db:migrate:undo` to roll back one)                 |
+| `npm run db:seed`    | Seed data (`db:seed:undo` to remove)                                  |
 
 Run `npm run check` before every commit.
 
@@ -127,6 +128,27 @@ Rules of each layer:
 4. Add tests next to the code (`*.test.ts`) for validators and pure helpers.
 
 Nothing else changes.
+
+## Reuse before you write
+
+Every reusable function, type, and helper exists **once**. Before writing a new one, search `src/common` and `src/infrastructure` and use what is there. If it needs to behave differently, change the original (or add a parameter) so every caller gets the change. Never copy it into a second version.
+
+| Need                                             | Single source                                                                                  |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| Validate `/:id`                                  | `idParamGuard("Entity")` in `common/validation/rules`                                          |
+| Partial update needs at least one field          | `assertAtLeastOne`                                                                             |
+| Fields the client may not send                   | `rejectFields`                                                                                 |
+| Check a field only when it was sent              | `assertOptional` (with `orNull(...)` to also allow null)                                       |
+| UUID, date, email, number, enum checks           | `isUuid`, `isDate`, `isEmail`, `isPositiveNumber`, `isOneOf`, …                                |
+| `?page=&limit=`                                  | `assertPageQuery`, `parsePageQuery`, `pageOffset`, `buildPaginatedData` in `common/pagination` |
+| Copy sent fields onto a model in an update       | `assignDefined` in `common/utils/assign-defined`                                               |
+| Reference codes and zero-padded sequences        | `common/utils/reference-code` (`padSequence`, `format*Reference`)                              |
+| Signed-in user / token check                     | `authenticate`, `currentUserId`, `requireValidToken` in `common/guards/auth.guard`             |
+| "Does this record exist and belong to the user?" | the owning service's `get…ById` (e.g. `accountService.getAccountById`)                         |
+| Route param and empty types                      | `IdParams`, `NoParams` from `infrastructure/http`                                              |
+| Database query helpers                           | `containsText`, `between`, `matchAny`, `isUniqueViolation`                                     |
+
+`npm run dup:check` (part of `npm run check` and CI) fails when two places contain the same block of code. Fix it by moving the code into one shared function and calling it from both places.
 
 ## Response envelope
 

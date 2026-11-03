@@ -10,6 +10,7 @@ import {
   UpdateTransactionDto,
   TransactionListQuery,
 } from "./dto/transaction.dto";
+import { assignDefined } from "../../common/utils/assign-defined";
 
 export interface PaginatedTransactions {
   rows: AllTransaction[];
@@ -29,6 +30,12 @@ const TRANSACTION_INCLUDES = [
     attributes: ["id", "type"],
   },
 ];
+
+/** The year and month columns stored next to each transaction date. */
+function yearAndMonth(transactionDate: string): { year: number; month: number } {
+  const date = new Date(transactionDate);
+  return { year: date.getFullYear(), month: date.getMonth() + 1 };
+}
 
 class TransactionRepository {
   async findAll(
@@ -80,14 +87,9 @@ class TransactionRepository {
   }
 
   async create(data: CreateTransactionDto, userId: string): Promise<AllTransaction> {
-    const date = new Date(data.transactionDate);
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1;
-
     const transaction = await AllTransaction.create({
       transactionDate: data.transactionDate,
-      year,
-      month,
+      ...yearAndMonth(data.transactionDate),
       accountId: data.accountId,
       transactionTypeId: data.transactionTypeId,
       amount: String(data.amount),
@@ -111,19 +113,18 @@ class TransactionRepository {
     if (!transaction) return null;
 
     if (data.transactionDate !== undefined) {
-      const date = new Date(data.transactionDate);
       transaction.transactionDate = data.transactionDate;
-      transaction.year = date.getFullYear();
-      transaction.month = date.getMonth() + 1;
+      Object.assign(transaction, yearAndMonth(data.transactionDate));
     }
 
-    if (data.accountId !== undefined) transaction.accountId = data.accountId;
-    if (data.transactionTypeId !== undefined)
-      transaction.transactionTypeId = data.transactionTypeId;
+    assignDefined(transaction, data, [
+      "accountId",
+      "transactionTypeId",
+      "paymentMethod",
+      "remarks",
+      "note",
+    ]);
     if (data.amount !== undefined) transaction.amount = String(data.amount);
-    if (data.paymentMethod !== undefined) transaction.paymentMethod = data.paymentMethod;
-    if (data.remarks !== undefined) transaction.remarks = data.remarks;
-    if (data.note !== undefined) transaction.note = data.note;
 
     await transaction.save();
 

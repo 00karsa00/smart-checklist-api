@@ -8,12 +8,14 @@
 // ultimately guaranteed by the (user_id, account_id) UNIQUE index — the service
 // retries on the rare race where two creates pick the same next number.
 
+import { padSequence } from "../../common/utils/reference-code";
+
 export const ACCOUNT_ID_PREFIX = "ACC";
 export const ACCOUNT_ID_PAD_LENGTH = 6;
 
 /** Format a numeric sequence into an account id, e.g. 1 -> "ACC000001". */
 export function formatAccountId(sequence: number): string {
-  return `${ACCOUNT_ID_PREFIX}${String(sequence).padStart(ACCOUNT_ID_PAD_LENGTH, "0")}`;
+  return `${ACCOUNT_ID_PREFIX}${padSequence(sequence, ACCOUNT_ID_PAD_LENGTH)}`;
 }
 
 /** Parse the numeric sequence out of an account id, or 0 if it doesn't match. */

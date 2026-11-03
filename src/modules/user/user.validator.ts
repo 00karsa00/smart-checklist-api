@@ -1,8 +1,9 @@
 import {
+  assertAtLeastOne,
   assertPageQuery,
+  idParamGuard,
   isEmail,
   isNonEmptyString,
-  isUuid,
   validationError,
 } from "../../common/validation/rules";
 import { Guard } from "../../infrastructure/http";
@@ -11,12 +12,7 @@ const MAX_NAME_LENGTH = 100;
 
 // ── Params ────────────────────────────────────────────────────────────────────
 
-export const validateUserIdParam: Guard = (ctx) => {
-  const { id } = ctx.params;
-
-  if (!id) throw validationError("User id is required.");
-  if (!isUuid(id)) throw validationError("User id must be a valid UUID.");
-};
+export const validateUserIdParam = idParamGuard("User");
 
 // ── Query ─────────────────────────────────────────────────────────────────────
 
@@ -49,11 +45,7 @@ export const validateCreateUser: Guard = (ctx) => {
 export const validateUpdateUser: Guard = (ctx) => {
   const { name, email, isActive } = ctx.body ?? {};
 
-  if (name === undefined && email === undefined && isActive === undefined) {
-    throw validationError(
-      "Request body must include at least one of: 'name', 'email', 'isActive'.",
-    );
-  }
+  assertAtLeastOne(ctx.body ?? {}, ["name", "email", "isActive"]);
 
   if (name !== undefined) {
     if (!isNonEmptyString(name)) {

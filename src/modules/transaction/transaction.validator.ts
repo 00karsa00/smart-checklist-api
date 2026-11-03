@@ -1,5 +1,8 @@
 import {
+  assertAtLeastOne,
+  assertOptional,
   assertPageQuery,
+  idParamGuard,
   isDate,
   isNonEmptyString,
   isPositiveNumber,
@@ -11,20 +14,13 @@ import { Guard } from "../../infrastructure/http";
 /** Optional free-text fields shared by create and update. */
 function assertOptionalTexts(body: Record<string, unknown>): void {
   for (const field of ["paymentMethod", "remarks", "note"]) {
-    if (body[field] !== undefined && !isNonEmptyString(body[field])) {
-      throw validationError(`Field '${field}' must be a non-empty string.`);
-    }
+    assertOptional(body, field, isNonEmptyString, `Field '${field}' must be a non-empty string.`);
   }
 }
 
 // ── Params ────────────────────────────────────────────────────────────────────
 
-export const validateTransactionIdParam: Guard = (ctx) => {
-  const { id } = ctx.params;
-
-  if (!id) throw validationError("Transaction id is required.");
-  if (!isUuid(id)) throw validationError("Transaction id must be a valid UUID.");
-};
+export const validateTransactionIdParam = idParamGuard("Transaction");
 
 // ── Query ─────────────────────────────────────────────────────────────────────
 
@@ -96,29 +92,22 @@ const UPDATABLE_FIELDS = [
 
 export const validateUpdateTransaction: Guard = (ctx) => {
   const body = (ctx.body ?? {}) as Record<string, unknown>;
-  const { transactionDate, accountId, transactionTypeId, amount } = body;
 
-  if (!UPDATABLE_FIELDS.some((field) => body[field] !== undefined)) {
-    throw validationError(
-      `Request body must include at least one of: ${UPDATABLE_FIELDS.map((f) => `'${f}'`).join(", ")}.`,
-    );
-  }
+  assertAtLeastOne(body, UPDATABLE_FIELDS);
 
-  if (transactionDate !== undefined && !isDate(transactionDate)) {
-    throw validationError("Field 'transactionDate' must be a valid date in YYYY-MM-DD format.");
-  }
-
-  if (accountId !== undefined && !isUuid(accountId)) {
-    throw validationError("Field 'accountId' must be a valid UUID.");
-  }
-
-  if (transactionTypeId !== undefined && !isUuid(transactionTypeId)) {
-    throw validationError("Field 'transactionTypeId' must be a valid UUID.");
-  }
-
-  if (amount !== undefined && !isPositiveNumber(amount)) {
-    throw validationError("Field 'amount' must be a positive number.");
-  }
-
+  assertOptional(
+    body,
+    "transactionDate",
+    isDate,
+    "Field 'transactionDate' must be a valid date in YYYY-MM-DD format.",
+  );
+  assertOptional(body, "accountId", isUuid, "Field 'accountId' must be a valid UUID.");
+  assertOptional(
+    body,
+    "transactionTypeId",
+    isUuid,
+    "Field 'transactionTypeId' must be a valid UUID.",
+  );
+  assertOptional(body, "amount", isPositiveNumber, "Field 'amount' must be a positive number.");
   assertOptionalTexts(body);
 };

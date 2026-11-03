@@ -1,3 +1,5 @@
+import { PageQuery } from "../../../common/pagination";
+
 // ── Request body DTOs ─────────────────────────────────────────────────────────
 
 export interface CreateTransactionDto {
@@ -22,14 +24,7 @@ export interface UpdateTransactionDto {
 
 // ── Request param / query interfaces ─────────────────────────────────────────
 
-export interface TransactionIdParams {
-  id: string;
-  [key: string]: string;
-}
-
-export interface TransactionListQuery {
-  page?: string;
-  limit?: string;
+export interface TransactionListQuery extends PageQuery {
   accountId?: string;
   transactionTypeId?: string;
   startDate?: string;
