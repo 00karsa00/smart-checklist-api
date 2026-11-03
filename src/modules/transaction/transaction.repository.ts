@@ -57,7 +57,10 @@ class TransactionRepository {
     const { rows, count } = await AllTransaction.findAndCountAll({
       where,
       include: TRANSACTION_INCLUDES,
-      order: [["transactionDate", "DESC"], ["createdAt", "DESC"]],
+      order: [
+        ["transactionDate", "DESC"],
+        ["createdAt", "DESC"],
+      ],
       offset,
       limit,
     });
@@ -76,10 +79,7 @@ class TransactionRepository {
     });
   }
 
-  async create(
-    data: CreateTransactionDto,
-    userId: string,
-  ): Promise<AllTransaction> {
+  async create(data: CreateTransactionDto, userId: string): Promise<AllTransaction> {
     const date = new Date(data.transactionDate);
     const year = date.getFullYear();
     const month = date.getMonth() + 1;
@@ -118,7 +118,8 @@ class TransactionRepository {
     }
 
     if (data.accountId !== undefined) transaction.accountId = data.accountId;
-    if (data.transactionTypeId !== undefined) transaction.transactionTypeId = data.transactionTypeId;
+    if (data.transactionTypeId !== undefined)
+      transaction.transactionTypeId = data.transactionTypeId;
     if (data.amount !== undefined) transaction.amount = String(data.amount);
     if (data.paymentMethod !== undefined) transaction.paymentMethod = data.paymentMethod;
     if (data.remarks !== undefined) transaction.remarks = data.remarks;

@@ -1,9 +1,6 @@
 import { User } from "../../infrastructure/database";
 
-import {
-  CreateUserDto,
-  UpdateUserDto,
-} from "./dto/user.dto";
+import { CreateUserDto, UpdateUserDto } from "./dto/user.dto";
 
 export interface PaginatedUsers {
   rows: User[];
@@ -40,10 +37,7 @@ class UserRepository {
     });
   }
 
-  async update(
-    id: string,
-    data: UpdateUserDto,
-  ): Promise<User | null> {
+  async update(id: string, data: UpdateUserDto): Promise<User | null> {
     const user = await User.findByPk(id);
 
     if (!user) {

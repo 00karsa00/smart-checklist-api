@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 async function loadConfiguration() {
-  return (await import("./configuration")).configuration;
+  return (await import("./configuration.js")).configuration;
 }
 
 describe("configuration", () => {

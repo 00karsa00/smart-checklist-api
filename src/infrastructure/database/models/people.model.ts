@@ -32,9 +32,9 @@ interface PersonAttributes {
 }
 
 type PersonCreationAttributes = Optional<
-    PersonAttributes,
-    "id" | "phoneNumber" | "upiId" | "status" | "notes" | "createdAt" | "updatedAt"
-  >;
+  PersonAttributes,
+  "id" | "phoneNumber" | "upiId" | "status" | "notes" | "createdAt" | "updatedAt"
+>;
 
 @Table({
   tableName: "people",

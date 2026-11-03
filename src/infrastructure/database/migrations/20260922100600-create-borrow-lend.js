@@ -1,7 +1,7 @@
-import { QueryInterface, DataTypes } from 'sequelize';
+import { QueryInterface, DataTypes } from "sequelize";
 
 export async function up(queryInterface) {
-  await queryInterface.createTable('borrow_lend', {
+  await queryInterface.createTable("borrow_lend", {
     id: {
       type: DataTypes.UUID,
       allowNull: false,
@@ -23,44 +23,44 @@ export async function up(queryInterface) {
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: 'people',
-        key: 'id',
+        model: "people",
+        key: "id",
       },
-      onUpdate: 'CASCADE',
-      onDelete: 'RESTRICT',
+      onUpdate: "CASCADE",
+      onDelete: "RESTRICT",
     },
 
     borrow_lend_type_id: {
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: 'borrow_lend_types',
-        key: 'id',
+        model: "borrow_lend_types",
+        key: "id",
       },
-      onUpdate: 'CASCADE',
-      onDelete: 'RESTRICT',
+      onUpdate: "CASCADE",
+      onDelete: "RESTRICT",
     },
 
     payment_method_id: {
       type: DataTypes.UUID,
       allowNull: true,
       references: {
-        model: 'payment_methods',
-        key: 'id',
+        model: "payment_methods",
+        key: "id",
       },
-      onUpdate: 'CASCADE',
-      onDelete: 'SET NULL',
+      onUpdate: "CASCADE",
+      onDelete: "SET NULL",
     },
 
     account_id: {
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: 'accounts',
-        key: 'id',
+        model: "accounts",
+        key: "id",
       },
-      onUpdate: 'CASCADE',
-      onDelete: 'RESTRICT',
+      onUpdate: "CASCADE",
+      onDelete: "RESTRICT",
     },
 
     amount: {
@@ -72,11 +72,11 @@ export async function up(queryInterface) {
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: 'users',
-        key: 'id',
+        model: "users",
+        key: "id",
       },
-      onUpdate: 'CASCADE',
-      onDelete: 'CASCADE',
+      onUpdate: "CASCADE",
+      onDelete: "CASCADE",
     },
 
     created_at: {
@@ -92,17 +92,17 @@ export async function up(queryInterface) {
     },
   });
 
-  await queryInterface.addIndex('borrow_lend', ['user_id']);
+  await queryInterface.addIndex("borrow_lend", ["user_id"]);
 
-  await queryInterface.addIndex('borrow_lend', ['user_id', 'transaction_date']);
+  await queryInterface.addIndex("borrow_lend", ["user_id", "transaction_date"]);
 
-  await queryInterface.addIndex('borrow_lend', ['person_id']);
+  await queryInterface.addIndex("borrow_lend", ["person_id"]);
 
-  await queryInterface.addIndex('borrow_lend', ['borrow_lend_type_id']);
+  await queryInterface.addIndex("borrow_lend", ["borrow_lend_type_id"]);
 
-  await queryInterface.addIndex('borrow_lend', ['account_id']);
+  await queryInterface.addIndex("borrow_lend", ["account_id"]);
 }
 
 export async function down(queryInterface) {
-  await queryInterface.dropTable('borrow_lend');
+  await queryInterface.dropTable("borrow_lend");
 }

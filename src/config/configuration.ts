@@ -1,9 +1,4 @@
-import {
-  readBooleanEnv,
-  readEnv,
-  readNumberEnv,
-  requireEnv,
-} from "../infrastructure/env";
+import { readBooleanEnv, readEnv, readNumberEnv, requireEnv } from "../infrastructure/env";
 import { databaseConfig } from "./database.config";
 
 const env = readEnv("NODE_ENV", "development");

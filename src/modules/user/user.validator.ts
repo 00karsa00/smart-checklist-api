@@ -50,7 +50,9 @@ export const validateUpdateUser: Guard = (ctx) => {
   const { name, email, isActive } = ctx.body ?? {};
 
   if (name === undefined && email === undefined && isActive === undefined) {
-    throw validationError("Request body must include at least one of: 'name', 'email', 'isActive'.");
+    throw validationError(
+      "Request body must include at least one of: 'name', 'email', 'isActive'.",
+    );
   }
 
   if (name !== undefined) {

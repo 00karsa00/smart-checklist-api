@@ -1,7 +1,7 @@
-import { QueryInterface, DataTypes } from 'sequelize';
+import { QueryInterface, DataTypes } from "sequelize";
 
 export async function up(queryInterface) {
-  await queryInterface.createTable('borrow_lend_types', {
+  await queryInterface.createTable("borrow_lend_types", {
     id: {
       type: DataTypes.UUID,
       allowNull: false,
@@ -19,21 +19,21 @@ export async function up(queryInterface) {
       type: DataTypes.UUID,
       allowNull: true,
       references: {
-        model: 'transaction_types',
-        key: 'id',
+        model: "transaction_types",
+        key: "id",
       },
-      onUpdate: 'CASCADE',
-      onDelete: 'SET NULL',
+      onUpdate: "CASCADE",
+      onDelete: "SET NULL",
     },
 
     name: {
       type: DataTypes.ENUM(
-        'Borrowed',
-        'Borrow Repaid',
-        'Lent',
-        'Lent Recovered',
-        'UPI Sent',
-        'UPI Received',
+        "Borrowed",
+        "Borrow Repaid",
+        "Lent",
+        "Lent Recovered",
+        "UPI Sent",
+        "UPI Received",
       ),
       allowNull: false,
       unique: true,
@@ -54,5 +54,5 @@ export async function up(queryInterface) {
 }
 
 export async function down(queryInterface) {
-  await queryInterface.dropTable('borrow_lend_types');
+  await queryInterface.dropTable("borrow_lend_types");
 }

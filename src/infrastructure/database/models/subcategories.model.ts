@@ -26,17 +26,17 @@ interface SubcategoryAttributes {
   updatedAt: Date;
 }
 
-type SubcategoryCreationAttributes = Optional<SubcategoryAttributes, "id" | "createdAt" | "updatedAt">;
+type SubcategoryCreationAttributes = Optional<
+  SubcategoryAttributes,
+  "id" | "createdAt" | "updatedAt"
+>;
 
 @Table({
   tableName: "subcategories",
   timestamps: true,
   underscored: true,
 })
-export class Subcategory extends Model<
-  SubcategoryAttributes,
-  SubcategoryCreationAttributes
-> {
+export class Subcategory extends Model<SubcategoryAttributes, SubcategoryCreationAttributes> {
   @PrimaryKey
   @Default(DataType.UUIDV4)
   @IsUUID(4)

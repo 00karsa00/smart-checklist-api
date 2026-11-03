@@ -1,7 +1,7 @@
-import { QueryInterface, DataTypes } from 'sequelize';
+import { QueryInterface, DataTypes } from "sequelize";
 
 export async function up(queryInterface) {
-  await queryInterface.createTable('transaction_types', {
+  await queryInterface.createTable("transaction_types", {
     id: {
       type: DataTypes.UUID,
       allowNull: false,
@@ -26,9 +26,8 @@ export async function up(queryInterface) {
       defaultValue: DataTypes.NOW,
     },
   });
-
 }
 
 export async function down(queryInterface) {
-  await queryInterface.dropTable('transaction_types');
+  await queryInterface.dropTable("transaction_types");
 }

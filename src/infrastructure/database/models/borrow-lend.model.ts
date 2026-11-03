@@ -34,19 +34,16 @@ interface BorrowLendAttributes {
 }
 
 type BorrowLendCreationAttributes = Optional<
-    BorrowLendAttributes,
-    "id" | "referenceCode" | "paymentMethodId" | "createdAt" | "updatedAt"
-  >;
+  BorrowLendAttributes,
+  "id" | "referenceCode" | "paymentMethodId" | "createdAt" | "updatedAt"
+>;
 
 @Table({
   tableName: "borrow_lend",
   timestamps: true,
   underscored: true,
 })
-export class BorrowLend extends Model<
-  BorrowLendAttributes,
-  BorrowLendCreationAttributes
-> {
+export class BorrowLend extends Model<BorrowLendAttributes, BorrowLendCreationAttributes> {
   @PrimaryKey
   @Default(DataType.UUIDV4)
   @IsUUID(4)

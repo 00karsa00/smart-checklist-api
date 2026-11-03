@@ -31,7 +31,9 @@ export function createHttpApp({ apiPrefix, corsOrigin, modules }: HttpAppOptions
   }
 
   app.use((req, _res, next) => {
-    next(new AppError(404, ERROR_CODES.NOT_FOUND, `Route ${req.method} ${req.originalUrl} not found`));
+    next(
+      new AppError(404, ERROR_CODES.NOT_FOUND, `Route ${req.method} ${req.originalUrl} not found`),
+    );
   });
   app.use(handleError);
 

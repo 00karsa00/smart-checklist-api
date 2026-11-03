@@ -28,9 +28,9 @@ interface SourceAttributes {
 }
 
 type SourceCreationAttributes = Optional<
-    SourceAttributes,
-    "id" | "sourceType" | "status" | "createdAt" | "updatedAt"
-  >;
+  SourceAttributes,
+  "id" | "sourceType" | "status" | "createdAt" | "updatedAt"
+>;
 
 @Table({
   tableName: "sources",

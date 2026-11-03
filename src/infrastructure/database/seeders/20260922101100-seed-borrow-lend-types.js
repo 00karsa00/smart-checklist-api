@@ -15,9 +15,7 @@ const BORROW_LEND_TYPES = [
 ];
 
 async function resolveTransactionTypeIds(queryInterface) {
-  const [rows] = await queryInterface.sequelize.query(
-    "SELECT id, type FROM transaction_types;",
-  );
+  const [rows] = await queryInterface.sequelize.query("SELECT id, type FROM transaction_types;");
   const byName = {};
   for (const row of rows) byName[row.type] = row.id;
   return byName;

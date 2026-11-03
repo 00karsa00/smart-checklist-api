@@ -1,7 +1,7 @@
-import { QueryInterface, DataTypes } from 'sequelize';
+import { QueryInterface, DataTypes } from "sequelize";
 
 export async function up(queryInterface) {
-  await queryInterface.createTable('people', {
+  await queryInterface.createTable("people", {
     id: {
       type: DataTypes.UUID,
       allowNull: false,
@@ -30,9 +30,9 @@ export async function up(queryInterface) {
     },
 
     status: {
-      type: DataTypes.ENUM('active', 'inactive'),
+      type: DataTypes.ENUM("active", "inactive"),
       allowNull: false,
-      defaultValue: 'active',
+      defaultValue: "active",
     },
 
     notes: {
@@ -44,11 +44,11 @@ export async function up(queryInterface) {
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: 'users',
-        key: 'id',
+        model: "users",
+        key: "id",
       },
-      onUpdate: 'CASCADE',
-      onDelete: 'CASCADE',
+      onUpdate: "CASCADE",
+      onDelete: "CASCADE",
     },
 
     created_at: {
@@ -64,14 +64,14 @@ export async function up(queryInterface) {
     },
   });
 
-  await queryInterface.addIndex('people', ['user_id']);
+  await queryInterface.addIndex("people", ["user_id"]);
 
-  await queryInterface.addIndex('people', ['user_id', 'code'], {
-    name: 'people_user_id_code_unique',
+  await queryInterface.addIndex("people", ["user_id", "code"], {
+    name: "people_user_id_code_unique",
     unique: true,
   });
 }
 
 export async function down(queryInterface) {
-  await queryInterface.dropTable('people');
+  await queryInterface.dropTable("people");
 }

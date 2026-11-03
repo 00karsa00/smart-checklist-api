@@ -36,18 +36,18 @@ interface AccountAttributes {
 }
 
 type AccountCreationAttributes = Optional<
-    AccountAttributes,
-    | "id"
-    | "accountNumber"
-    | "customerNumber"
-    | "ifsc"
-    | "status"
-    | "currentBalance"
-    | "openingDate"
-    | "closingDate"
-    | "createdAt"
-    | "updatedAt"
-  >;
+  AccountAttributes,
+  | "id"
+  | "accountNumber"
+  | "customerNumber"
+  | "ifsc"
+  | "status"
+  | "currentBalance"
+  | "openingDate"
+  | "closingDate"
+  | "createdAt"
+  | "updatedAt"
+>;
 
 @Table({
   tableName: "accounts",

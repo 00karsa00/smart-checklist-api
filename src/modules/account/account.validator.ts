@@ -212,7 +212,11 @@ export const validateUpdateAccount: Guard = (ctx) => {
     throw validationError("Field 'closingDate' must be a valid date in YYYY-MM-DD format or null.");
   }
 
-  if (typeof openingDate === "string" && typeof closingDate === "string" && openingDate > closingDate) {
+  if (
+    typeof openingDate === "string" &&
+    typeof closingDate === "string" &&
+    openingDate > closingDate
+  ) {
     throw validationError("Field 'openingDate' must not be after 'closingDate'.");
   }
 

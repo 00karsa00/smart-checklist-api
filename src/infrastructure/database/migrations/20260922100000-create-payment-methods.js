@@ -1,7 +1,7 @@
-import { QueryInterface, DataTypes } from 'sequelize';
+import { QueryInterface, DataTypes } from "sequelize";
 
 export async function up(queryInterface) {
-  await queryInterface.createTable('payment_methods', {
+  await queryInterface.createTable("payment_methods", {
     id: {
       type: DataTypes.UUID,
       allowNull: false,
@@ -26,9 +26,9 @@ export async function up(queryInterface) {
     },
 
     status: {
-      type: DataTypes.ENUM('active', 'inactive'),
+      type: DataTypes.ENUM("active", "inactive"),
       allowNull: false,
-      defaultValue: 'active',
+      defaultValue: "active",
     },
 
     created_at: {
@@ -46,5 +46,5 @@ export async function up(queryInterface) {
 }
 
 export async function down(queryInterface) {
-  await queryInterface.dropTable('payment_methods');
+  await queryInterface.dropTable("payment_methods");
 }

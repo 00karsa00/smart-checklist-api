@@ -1,7 +1,7 @@
-import { DataTypes } from 'sequelize';
+import { DataTypes } from "sequelize";
 
 export async function up(queryInterface) {
-  await queryInterface.createTable('accounts', {
+  await queryInterface.createTable("accounts", {
     id: {
       type: DataTypes.UUID,
       allowNull: false,
@@ -13,11 +13,11 @@ export async function up(queryInterface) {
       type: DataTypes.UUID,
       allowNull: false,
       references: {
-        model: 'users',
-        key: 'id',
+        model: "users",
+        key: "id",
       },
-      onUpdate: 'CASCADE',
-      onDelete: 'CASCADE',
+      onUpdate: "CASCADE",
+      onDelete: "CASCADE",
     },
 
     account_name: {
@@ -46,14 +46,14 @@ export async function up(queryInterface) {
     },
 
     type: {
-      type: DataTypes.ENUM('current', 'saving'),
+      type: DataTypes.ENUM("current", "saving"),
       allowNull: false,
     },
 
     status: {
-      type: DataTypes.ENUM('active', 'inactive', 'closed'),
+      type: DataTypes.ENUM("active", "inactive", "closed"),
       allowNull: false,
-      defaultValue: 'active',
+      defaultValue: "active",
     },
 
     current_balance: {
@@ -85,23 +85,16 @@ export async function up(queryInterface) {
     },
   });
 
-  await queryInterface.addIndex('accounts', ['user_id']);
+  await queryInterface.addIndex("accounts", ["user_id"]);
 
-  await queryInterface.addIndex(
-    'accounts',
-    ['user_id', 'status'],
-  );
+  await queryInterface.addIndex("accounts", ["user_id", "status"]);
 }
 
 export async function down(queryInterface) {
-  await queryInterface.dropTable('accounts');
+  await queryInterface.dropTable("accounts");
 
   // PostgreSQL enum cleanup
-  await queryInterface.sequelize.query(
-    'DROP TYPE IF EXISTS "enum_accounts_type";',
-  );
+  await queryInterface.sequelize.query('DROP TYPE IF EXISTS "enum_accounts_type";');
 
-  await queryInterface.sequelize.query(
-    'DROP TYPE IF EXISTS "enum_accounts_status";',
-  );
+  await queryInterface.sequelize.query('DROP TYPE IF EXISTS "enum_accounts_status";');
 }

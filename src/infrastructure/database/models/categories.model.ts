@@ -29,19 +29,16 @@ interface CategoryAttributes {
 }
 
 type CategoryCreationAttributes = Optional<
-    CategoryAttributes,
-    "id" | "transactionTypeId" | "createdAt" | "updatedAt"
-  >;
+  CategoryAttributes,
+  "id" | "transactionTypeId" | "createdAt" | "updatedAt"
+>;
 
 @Table({
   tableName: "categories",
   timestamps: true,
   underscored: true,
 })
-export class Category extends Model<
-  CategoryAttributes,
-  CategoryCreationAttributes
-> {
+export class Category extends Model<CategoryAttributes, CategoryCreationAttributes> {
   @PrimaryKey
   @Default(DataType.UUIDV4)
   @IsUUID(4)

@@ -71,15 +71,9 @@ module.exports = {
   },
 
   async down(queryInterface, Sequelize) {
-    await queryInterface.removeIndex(
-      "accounts",
-      "accounts_user_id_type",
-    );
+    await queryInterface.removeIndex("accounts", "accounts_user_id_type");
 
-    await queryInterface.removeIndex(
-      "accounts",
-      "accounts_user_id_account_id_unique",
-    );
+    await queryInterface.removeIndex("accounts", "accounts_user_id_account_id_unique");
 
     await queryInterface.changeColumn("accounts", "opening_date", {
       type: Sequelize.DATEONLY,

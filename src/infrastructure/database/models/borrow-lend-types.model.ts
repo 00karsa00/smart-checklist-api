@@ -28,9 +28,9 @@ interface BorrowLendTypeAttributes {
 }
 
 type BorrowLendTypeCreationAttributes = Optional<
-    BorrowLendTypeAttributes,
-    "id" | "transactionTypeId" | "createdAt" | "updatedAt"
-  >;
+  BorrowLendTypeAttributes,
+  "id" | "transactionTypeId" | "createdAt" | "updatedAt"
+>;
 
 @Table({
   tableName: "borrow_lend_types",

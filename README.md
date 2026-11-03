@@ -21,9 +21,9 @@ Every endpoint returns the same shape:
 ```jsonc
 {
   "success": true,
-  "data": { /* endpoint payload */ },
-  "meta": null,                 // reserved transport meta
-  "requestId": "…"
+  "data": {/* endpoint payload */},
+  "meta": null, // reserved transport meta
+  "requestId": "…",
 }
 ```
 
@@ -31,7 +31,7 @@ Every endpoint returns the same shape:
 {
   "success": false,
   "error": { "code": "ACCOUNT_NOT_FOUND", "message": "Account not found." },
-  "requestId": "…"
+  "requestId": "…",
 }
 ```
 
@@ -41,9 +41,9 @@ List endpoints nest pagination **inside** `data`:
 {
   "success": true,
   "data": {
-    "items": [ /* … */ ],
-    "pagination": { "page": 1, "limit": 20, "total": 4, "totalPages": 1 }
-  }
+    "items": [/* … */],
+    "pagination": { "page": 1, "limit": 20, "total": 4, "totalPages": 1 },
+  },
 }
 ```
 
@@ -68,32 +68,32 @@ sends `user_id` / `userId`; it is taken from the verified token.
 
 Base path: `/api/accounts` — all routes require JWT auth.
 
-| Method | Path                 | Description                    |
-| ------ | -------------------- | ------------------------------ |
-| GET    | `/api/accounts`      | List the caller's accounts     |
-| GET    | `/api/accounts/:id`  | Get one account (owned)        |
-| POST   | `/api/accounts`      | Create an account              |
-| PATCH  | `/api/accounts/:id`  | Update an account (owned)      |
-| DELETE | `/api/accounts/:id`  | Soft-delete / deactivate       |
+| Method | Path                | Description                |
+| ------ | ------------------- | -------------------------- |
+| GET    | `/api/accounts`     | List the caller's accounts |
+| GET    | `/api/accounts/:id` | Get one account (owned)    |
+| POST   | `/api/accounts`     | Create an account          |
+| PATCH  | `/api/accounts/:id` | Update an account (owned)  |
+| DELETE | `/api/accounts/:id` | Soft-delete / deactivate   |
 
 ### Account model
 
-| Field           | Type                                 | Notes                                        |
-| --------------- | ------------------------------------ | -------------------------------------------- |
-| `id`            | UUID                                 | Primary key                                  |
-| `accountId`     | string                               | `ACC000001` — generated, unique per user     |
-| `accountName`   | string                               | Required                                     |
-| `bank`          | string                               | Required                                     |
-| `accountNumber` | string \| null                       | Optional, unique per user when set           |
-| `customerNumber`| string \| null                       | Optional                                     |
-| `ifsc`          | string \| null                       | Optional, normalised to uppercase            |
-| `type`          | `saving` \| `current`                | Required                                     |
-| `status`        | `active` \| `inactive` \| `closed`   | Defaults to `active`                         |
-| `currentBalance`| string (DECIMAL 15,2)                | Not editable here (owned by transactions)    |
-| `openingDate`   | string \| null (`YYYY-MM-DD`)        | Optional                                     |
-| `closingDate`   | string \| null (`YYYY-MM-DD`)        | Auto-set when status becomes `closed`        |
-| `userId`        | UUID                                 | From JWT — never accepted from the client    |
-| `createdAt` / `updatedAt` | datetime                   |                                              |
+| Field                     | Type                               | Notes                                     |
+| ------------------------- | ---------------------------------- | ----------------------------------------- |
+| `id`                      | UUID                               | Primary key                               |
+| `accountId`               | string                             | `ACC000001` — generated, unique per user  |
+| `accountName`             | string                             | Required                                  |
+| `bank`                    | string                             | Required                                  |
+| `accountNumber`           | string \| null                     | Optional, unique per user when set        |
+| `customerNumber`          | string \| null                     | Optional                                  |
+| `ifsc`                    | string \| null                     | Optional, normalised to uppercase         |
+| `type`                    | `saving` \| `current`              | Required                                  |
+| `status`                  | `active` \| `inactive` \| `closed` | Defaults to `active`                      |
+| `currentBalance`          | string (DECIMAL 15,2)              | Not editable here (owned by transactions) |
+| `openingDate`             | string \| null (`YYYY-MM-DD`)      | Optional                                  |
+| `closingDate`             | string \| null (`YYYY-MM-DD`)      | Auto-set when status becomes `closed`     |
+| `userId`                  | UUID                               | From JWT — never accepted from the client |
+| `createdAt` / `updatedAt` | datetime                           |                                           |
 
 ### List — `GET /api/accounts`
 
@@ -120,7 +120,7 @@ Only the authenticated user's accounts are returned.
   "status": "active",
   "openingDate": null,
   "closingDate": null,
-  "currentBalance": 32941      // optional initial balance only
+  "currentBalance": 32941, // optional initial balance only
 }
 ```
 

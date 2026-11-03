@@ -19,12 +19,7 @@ class TransactionService {
     filters: TransactionListQuery,
   ): Promise<PaginatedData<Transaction>> {
     const offset = (page - 1) * limit;
-    const { rows, count } = await transactionRepository.findAll(
-      userId,
-      offset,
-      limit,
-      filters,
-    );
+    const { rows, count } = await transactionRepository.findAll(userId, offset, limit, filters);
 
     return buildPaginatedData(rows as unknown as Transaction[], {
       page,
@@ -33,47 +28,31 @@ class TransactionService {
     });
   }
 
-  async getTransactionById(
-    id: string,
-    userId: string,
-  ): Promise<Transaction> {
+  async getTransactionById(id: string, userId: string): Promise<Transaction> {
     const transaction = await transactionRepository.findById(id, userId);
 
     if (!transaction) {
-      throw new AppError(
-        404,
-        ERROR_CODES.TRANSACTION_NOT_FOUND,
-        "Transaction not found.",
-      );
+      throw new AppError(404, ERROR_CODES.TRANSACTION_NOT_FOUND, "Transaction not found.");
     }
 
     return transaction as unknown as Transaction;
   }
 
-  async createTransaction(
-    data: CreateTransactionDto,
-    userId: string,
-  ): Promise<Transaction> {
+  async createTransaction(data: CreateTransactionDto, userId: string): Promise<Transaction> {
     // Verify the account exists and belongs to this user
     const account = await accountRepository.findById(data.accountId, userId);
 
     if (!account) {
-      throw new AppError(
-        404,
-        ERROR_CODES.ACCOUNT_NOT_FOUND,
-        "Account not found.",
-      );
+      throw new AppError(404, ERROR_CODES.ACCOUNT_NOT_FOUND, "Account not found.");
     }
 
     // Verify the transaction type exists
-    const transactionType = await transactionRepository.findTransactionTypeById(data.transactionTypeId);
+    const transactionType = await transactionRepository.findTransactionTypeById(
+      data.transactionTypeId,
+    );
 
     if (!transactionType) {
-      throw new AppError(
-        404,
-        ERROR_CODES.NOT_FOUND,
-        "Transaction type not found.",
-      );
+      throw new AppError(404, ERROR_CODES.NOT_FOUND, "Transaction type not found.");
     }
 
     const transaction = await transactionRepository.create(data, userId);
@@ -88,11 +67,7 @@ class TransactionService {
     const existing = await transactionRepository.findById(id, userId);
 
     if (!existing) {
-      throw new AppError(
-        404,
-        ERROR_CODES.TRANSACTION_NOT_FOUND,
-        "Transaction not found.",
-      );
+      throw new AppError(404, ERROR_CODES.TRANSACTION_NOT_FOUND, "Transaction not found.");
     }
 
     // If switching account, verify new account belongs to user
@@ -100,24 +75,18 @@ class TransactionService {
       const account = await accountRepository.findById(data.accountId, userId);
 
       if (!account) {
-        throw new AppError(
-          404,
-          ERROR_CODES.ACCOUNT_NOT_FOUND,
-          "Account not found.",
-        );
+        throw new AppError(404, ERROR_CODES.ACCOUNT_NOT_FOUND, "Account not found.");
       }
     }
 
     // If switching transaction type, verify it exists
     if (data.transactionTypeId) {
-      const transactionType = await transactionRepository.findTransactionTypeById(data.transactionTypeId);
+      const transactionType = await transactionRepository.findTransactionTypeById(
+        data.transactionTypeId,
+      );
 
       if (!transactionType) {
-        throw new AppError(
-          404,
-          ERROR_CODES.NOT_FOUND,
-          "Transaction type not found.",
-        );
+        throw new AppError(404, ERROR_CODES.NOT_FOUND, "Transaction type not found.");
       }
     }
 
@@ -125,18 +94,11 @@ class TransactionService {
     return updated as unknown as Transaction;
   }
 
-  async deleteTransaction(
-    id: string,
-    userId: string,
-  ): Promise<null> {
+  async deleteTransaction(id: string, userId: string): Promise<null> {
     const existing = await transactionRepository.findById(id, userId);
 
     if (!existing) {
-      throw new AppError(
-        404,
-        ERROR_CODES.TRANSACTION_NOT_FOUND,
-        "Transaction not found.",
-      );
+      throw new AppError(404, ERROR_CODES.TRANSACTION_NOT_FOUND, "Transaction not found.");
     }
 
     await transactionRepository.delete(id, userId);

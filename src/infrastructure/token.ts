@@ -12,8 +12,7 @@ export interface TokenClaims {
 }
 
 export type TokenCheck =
-  | { ok: true; claims: TokenClaims }
-  | { ok: false; reason: "expired" | "invalid" };
+  { ok: true; claims: TokenClaims } | { ok: false; reason: "expired" | "invalid" };
 
 export function signToken(userId: string): string {
   const claims: TokenClaims = { sub: userId };

@@ -17,7 +17,12 @@ describe("authenticate", () => {
 
   it.each([
     ["no header", {}, "UNAUTHORIZED", "Authorization token is required."],
-    ["not bearer", { Authorization: "Basic abc" }, "UNAUTHORIZED", "Authorization token is required."],
+    [
+      "not bearer",
+      { Authorization: "Basic abc" },
+      "UNAUTHORIZED",
+      "Authorization token is required.",
+    ],
     ["garbage token", { Authorization: "Bearer nope" }, "UNAUTHORIZED", "Invalid token."],
   ])("rejects %s", async (_label, headers, code, message) => {
     await expect(async () => authenticate(fakeContext({ headers }))).rejects.toMatchObject({

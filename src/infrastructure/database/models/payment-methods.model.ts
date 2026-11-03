@@ -22,19 +22,16 @@ interface PaymentMethodAttributes {
 }
 
 type PaymentMethodCreationAttributes = Optional<
-    PaymentMethodAttributes,
-    "id" | "description" | "status" | "createdAt" | "updatedAt"
-  >;
+  PaymentMethodAttributes,
+  "id" | "description" | "status" | "createdAt" | "updatedAt"
+>;
 
 @Table({
   tableName: "payment_methods",
   timestamps: true,
   underscored: true,
 })
-export class PaymentMethod extends Model<
-  PaymentMethodAttributes,
-  PaymentMethodCreationAttributes
-> {
+export class PaymentMethod extends Model<PaymentMethodAttributes, PaymentMethodCreationAttributes> {
   @PrimaryKey
   @Default(DataType.UUIDV4)
   @IsUUID(4)

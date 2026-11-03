@@ -42,25 +42,28 @@ interface AllTransactionAttributes {
 }
 
 type AllTransactionCreationAttributes = Optional<
-    AllTransactionAttributes,
-    | "id"
-    | "paymentMethod"
-    | "paymentMethodId"
-    | "categoryId"
-    | "subcategoryId"
-    | "sourceId"
-    | "remarks"
-    | "note"
-    | "createdAt"
-    | "updatedAt"
-  >;
+  AllTransactionAttributes,
+  | "id"
+  | "paymentMethod"
+  | "paymentMethodId"
+  | "categoryId"
+  | "subcategoryId"
+  | "sourceId"
+  | "remarks"
+  | "note"
+  | "createdAt"
+  | "updatedAt"
+>;
 
 @Table({
   tableName: "all_transactions",
   timestamps: true,
   underscored: true,
 })
-export class AllTransaction extends Model<AllTransactionAttributes, AllTransactionCreationAttributes> {
+export class AllTransaction extends Model<
+  AllTransactionAttributes,
+  AllTransactionCreationAttributes
+> {
   @PrimaryKey
   @Default(DataType.UUIDV4)
   @IsUUID(4)
