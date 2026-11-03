@@ -7,6 +7,7 @@ import {
   createAccount,
   updateAccount,
   deleteAccount,
+  getActiveAccountDropdownList,
 } from "./account.controller";
 import {
   validateAccountIdParam,
@@ -27,5 +28,6 @@ router.get("/:id", validateAccountIdParam, getAccount);
 router.post("/", validateCreateAccount, createAccount);
 router.patch("/:id", validateAccountIdParam, validateUpdateAccount, updateAccount);
 router.delete("/:id", validateAccountIdParam, deleteAccount);
+router.get("/active-dropdown", validateAccountListQuery, getActiveAccountDropdownList);
 
 export default router;

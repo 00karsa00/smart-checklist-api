@@ -16,6 +16,10 @@ import { Optional } from "sequelize";
 import { Account } from "./accounts.model";
 import { TransactionType } from "./transaction-types.model";
 import { User } from "./user.model";
+import { Category } from "./categories.model";
+import { Subcategory } from "./subcategories.model";
+import { Source } from "./sources.model";
+import { PaymentMethod } from "./payment-methods.model";
 
 interface AllTransactionAttributes {
   id: string;
@@ -24,7 +28,11 @@ interface AllTransactionAttributes {
   month: number;
   accountId: string;
   paymentMethod: string | null;
+  paymentMethodId: string | null;
   transactionTypeId: string;
+  categoryId: string | null;
+  subcategoryId: string | null;
+  sourceId: string | null;
   amount: string;
   remarks: string | null;
   note: string | null;
@@ -34,7 +42,19 @@ interface AllTransactionAttributes {
 }
 
 interface AllTransactionCreationAttributes
-  extends Optional<AllTransactionAttributes, "id" | "paymentMethod" | "remarks" | "note" | "createdAt" | "updatedAt"> {}
+  extends Optional<
+    AllTransactionAttributes,
+    | "id"
+    | "paymentMethod"
+    | "paymentMethodId"
+    | "categoryId"
+    | "subcategoryId"
+    | "sourceId"
+    | "remarks"
+    | "note"
+    | "createdAt"
+    | "updatedAt"
+  > {}
 
 @Table({
   tableName: "all_transactions",
@@ -69,9 +89,20 @@ export class AllTransaction extends Model<AllTransactionAttributes, AllTransacti
   @BelongsTo(() => Account)
   declare account: Account;
 
+  // Legacy free-text payment method. Kept nullable for backward compatibility;
+  // new writes should populate payment_method_id instead.
   @AllowNull(true)
   @Column(DataType.STRING)
   declare paymentMethod: string | null;
+
+  @Index
+  @AllowNull(true)
+  @ForeignKey(() => PaymentMethod)
+  @Column(DataType.UUID)
+  declare paymentMethodId: string | null;
+
+  @BelongsTo(() => PaymentMethod)
+  declare paymentMethodRef: PaymentMethod;
 
   @Index
   @AllowNull(false)
@@ -81,6 +112,34 @@ export class AllTransaction extends Model<AllTransactionAttributes, AllTransacti
 
   @BelongsTo(() => TransactionType)
   declare transactionType: TransactionType;
+
+  @Index
+  @AllowNull(true)
+  @ForeignKey(() => Category)
+  @Column(DataType.UUID)
+  declare categoryId: string | null;
+
+  @BelongsTo(() => Category)
+  declare category: Category;
+
+  @Index
+  @AllowNull(true)
+  @ForeignKey(() => Subcategory)
+  @Column(DataType.UUID)
+  declare subcategoryId: string | null;
+
+  @BelongsTo(() => Subcategory)
+  declare subcategory: Subcategory;
+
+  // Income rows reference a source; expense/other rows leave it null.
+  @Index
+  @AllowNull(true)
+  @ForeignKey(() => Source)
+  @Column(DataType.UUID)
+  declare sourceId: string | null;
+
+  @BelongsTo(() => Source)
+  declare source: Source;
 
   @AllowNull(false)
   @Column(DataType.DECIMAL(15, 2))

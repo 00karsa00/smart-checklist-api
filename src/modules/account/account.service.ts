@@ -129,6 +129,17 @@ class AccountService {
     return successResponse(null, undefined);
   }
 
+  async getActiveAccountDropdownList(userId: any, payload: { page?: number; limit?: number; search?: string | null }):  Promise<ApiSuccessResponse<PaginatedData<Account>>>  {
+    const { page = 1, limit = 100, search = null } = payload;
+    const {rows: accounts, count: total} = await accountRepository.findActiveAccountsDropdownList(userId, { page, limit, search });
+    const data = buildPaginatedData(accounts as unknown as Account[], {
+      page: page,
+      limit: limit,
+      total: total,
+    });
+    return successResponse(data, undefined);
+  }
+
   // ── Internals ─────────────────────────────────────────────────────────────
 
   /**

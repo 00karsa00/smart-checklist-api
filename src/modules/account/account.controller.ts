@@ -101,3 +101,23 @@ export async function deleteAccount(
     next(error);
   }
 }
+
+
+export async function getActiveAccountDropdownList(
+  req: Request<Record<string, never>, ApiSuccessResponse<PaginatedData<Account>>, never, AccountListQuery & Record<string, string | undefined>>,
+  res: Response<ApiSuccessResponse<PaginatedData<Account>>>,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const page = Math.max(1, parseInt(req.query.page ?? "1", 10) || 1);
+    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit ?? "100", 10) || 100));
+    const result = await accountService.getActiveAccountDropdownList(req.user!.userId, {
+      page,
+      limit,
+      search: req.query.search ?? null,
+    });
+    res.status(200).json(withRequestId(result, req));
+  } catch (error) {
+    next(error);
+  }
+}

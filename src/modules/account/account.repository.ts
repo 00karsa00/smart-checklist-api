@@ -84,6 +84,37 @@ class AccountRepository {
     return AllTransaction.count({ where: { accountId } });
   }
 
+  async findActiveAccountsDropdownList(
+    userId: string,
+    options: { page: number; limit: number; search: string | null },
+  ): Promise<PaginatedAccounts> {
+    const { page, limit, search } = options;
+    const offset = (page - 1) * limit;
+    const where: Record<string, unknown> = {
+      userId,
+      status: AccountStatus.ACTIVE,
+    };
+
+    if (search) {
+      const term = `%${search}%`;
+      where[Op.or as unknown as string] = [
+        { accountName: { [Op.iLike]: term } },
+        { bank: { [Op.iLike]: term } },
+        { accountNumber: { [Op.iLike]: term } },
+      ];
+    }
+
+    const { rows, count } = await Account.findAndCountAll({
+      where,
+      attributes: ["id", "accountName", "bank", "accountNumber"],
+      order: [["accountName", "ASC"]],
+      offset,
+      limit,
+    });
+
+    return { rows, count };
+  }
+
   async create(
     data: CreateAccountDto,
     userId: string,
