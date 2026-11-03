@@ -1,0 +1,15 @@
+{
+  "path": ["src"],
+  "format": ["typescript"],
+  "minTokens": 50,
+  "threshold": 0,
+  "ignore": [
+    "**/*.test.ts",
+    "src/infrastructure/database/models/**",
+    "src/infrastructure/database/migrations/**",
+    "src/infrastructure/database/seeders/**"
+  ],
+  "reporters": ["console"],
+  "absolute": false,
+  "gitignore": true
+}

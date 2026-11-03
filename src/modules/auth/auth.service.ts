@@ -1,7 +1,8 @@
 import { configuration } from "../../config/configuration";
 import { AppError } from "../../common/errors/app.error";
 import { ERROR_CODES } from "../../common/errors/error.codes";
-import { signToken, verifyToken } from "../../infrastructure/token";
+import { requireValidToken } from "../../common/guards/auth.guard";
+import { signToken } from "../../infrastructure/token";
 
 import { GenerateTokenDto, ValidateTokenDto } from "./dto/auth.dto";
 import { GenerateTokenResponse, ValidateTokenResponse } from "./types/auth.type";
@@ -28,15 +29,7 @@ class AuthService {
   }
 
   async validateToken(data: ValidateTokenDto): Promise<ValidateTokenResponse> {
-    const check = verifyToken(data.token);
-
-    if (!check.ok) {
-      throw check.reason === "expired"
-        ? new AppError(401, ERROR_CODES.TOKEN_EXPIRED, "Token has expired")
-        : new AppError(401, ERROR_CODES.UNAUTHORIZED, "Invalid token");
-    }
-
-    const { sub: userId, iat, exp } = check.claims;
+    const { sub: userId, iat, exp } = requireValidToken(data.token);
     const user = await authRepository.findById(userId);
 
     if (!user) {

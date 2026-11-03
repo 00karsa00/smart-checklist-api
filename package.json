@@ -12,12 +12,13 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "check": "npm run typecheck && npm run lint && npm run format:check && npm test && npm run build",
+    "check": "npm run typecheck && npm run lint && npm run dup:check && npm run format:check && npm test && npm run build",
     "db:migrate": "npm run build && sequelize-cli db:migrate",
     "db:migrate:undo": "npm run build && sequelize-cli db:migrate:undo",
     "db:migrate:undo:all": "npm run build && sequelize-cli db:migrate:undo:all",
     "db:seed": "npm run build && sequelize-cli db:seed:all",
-    "db:seed:undo": "npm run build && sequelize-cli db:seed:undo:all"
+    "db:seed:undo": "npm run build && sequelize-cli db:seed:undo:all",
+    "dup:check": "jscpd"
   },
   "license": "ISC",
   "description": "Personal Finance API (Express + Sequelize + PostgreSQL)",
@@ -38,6 +39,7 @@
     "@types/jsonwebtoken": "^9.0.7",
     "@types/node": "^26.5.1",
     "eslint": "^9.39.5",
+    "jscpd": "^4.3.0",
     "prettier": "^3.9.10",
     "sequelize-cli": "^6.6.5",
     "tsx": "^4.23.13",

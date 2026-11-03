@@ -1,19 +1,17 @@
 import { AnyHttpContext, Guard } from "../../infrastructure/http";
-import { verifyToken } from "../../infrastructure/token";
+import { TokenClaims, verifyToken } from "../../infrastructure/token";
 import { AppError } from "../errors/app.error";
 import { ERROR_CODES } from "../errors/error.codes";
 
 const BEARER = "Bearer ";
 
-/** Require a valid `Authorization: Bearer <token>` and set ctx.user. */
-export const authenticate: Guard = (ctx) => {
-  const header = ctx.header("authorization");
+function missingToken(): AppError {
+  return new AppError(401, ERROR_CODES.UNAUTHORIZED, "Authorization token is required.");
+}
 
-  if (!header || !header.startsWith(BEARER)) {
-    throw new AppError(401, ERROR_CODES.UNAUTHORIZED, "Authorization token is required.");
-  }
-
-  const check = verifyToken(header.slice(BEARER.length));
+/** The token's claims, or the matching 401 error when it is expired or invalid. */
+export function requireValidToken(token: string): TokenClaims {
+  const check = verifyToken(token);
 
   if (!check.ok) {
     throw check.reason === "expired"
@@ -21,13 +19,20 @@ export const authenticate: Guard = (ctx) => {
       : new AppError(401, ERROR_CODES.UNAUTHORIZED, "Invalid token.");
   }
 
-  ctx.user = { userId: check.claims.sub };
+  return check.claims;
+}
+
+/** Require a valid `Authorization: Bearer <token>` and set ctx.user. */
+export const authenticate: Guard = (ctx) => {
+  const header = ctx.header("authorization");
+
+  if (!header || !header.startsWith(BEARER)) throw missingToken();
+
+  ctx.user = { userId: requireValidToken(header.slice(BEARER.length)).sub };
 };
 
 /** The signed-in user's id. Use on routes behind `authenticate`. */
 export function currentUserId(ctx: AnyHttpContext): string {
-  if (!ctx.user) {
-    throw new AppError(401, ERROR_CODES.UNAUTHORIZED, "Authorization token is required.");
-  }
+  if (!ctx.user) throw missingToken();
   return ctx.user.userId;
 }

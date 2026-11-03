@@ -1,7 +1,7 @@
 import { AppError } from "../../common/errors/app.error";
 import { ERROR_CODES } from "../../common/errors/error.codes";
-import { PaginatedData, buildPaginatedData } from "../../common/pagination";
-import { accountRepository } from "../account/account.repository";
+import { PaginatedData, buildPaginatedData, pageOffset } from "../../common/pagination";
+import { accountService } from "../account/account.service";
 
 import {
   CreateTransactionDto,
@@ -18,7 +18,7 @@ class TransactionService {
     limit: number,
     filters: TransactionListQuery,
   ): Promise<PaginatedData<Transaction>> {
-    const offset = (page - 1) * limit;
+    const offset = pageOffset({ page, limit });
     const { rows, count } = await transactionRepository.findAll(userId, offset, limit, filters);
 
     return buildPaginatedData(rows as unknown as Transaction[], {
@@ -39,21 +39,8 @@ class TransactionService {
   }
 
   async createTransaction(data: CreateTransactionDto, userId: string): Promise<Transaction> {
-    // Verify the account exists and belongs to this user
-    const account = await accountRepository.findById(data.accountId, userId);
-
-    if (!account) {
-      throw new AppError(404, ERROR_CODES.ACCOUNT_NOT_FOUND, "Account not found.");
-    }
-
-    // Verify the transaction type exists
-    const transactionType = await transactionRepository.findTransactionTypeById(
-      data.transactionTypeId,
-    );
-
-    if (!transactionType) {
-      throw new AppError(404, ERROR_CODES.NOT_FOUND, "Transaction type not found.");
-    }
+    await accountService.getAccountById(data.accountId, userId);
+    await this.assertTransactionTypeExists(data.transactionTypeId);
 
     const transaction = await transactionRepository.create(data, userId);
     return transaction as unknown as Transaction;
@@ -64,45 +51,30 @@ class TransactionService {
     userId: string,
     data: UpdateTransactionDto,
   ): Promise<Transaction> {
-    const existing = await transactionRepository.findById(id, userId);
+    await this.getTransactionById(id, userId);
 
-    if (!existing) {
-      throw new AppError(404, ERROR_CODES.TRANSACTION_NOT_FOUND, "Transaction not found.");
-    }
-
-    // If switching account, verify new account belongs to user
-    if (data.accountId) {
-      const account = await accountRepository.findById(data.accountId, userId);
-
-      if (!account) {
-        throw new AppError(404, ERROR_CODES.ACCOUNT_NOT_FOUND, "Account not found.");
-      }
-    }
-
-    // If switching transaction type, verify it exists
-    if (data.transactionTypeId) {
-      const transactionType = await transactionRepository.findTransactionTypeById(
-        data.transactionTypeId,
-      );
-
-      if (!transactionType) {
-        throw new AppError(404, ERROR_CODES.NOT_FOUND, "Transaction type not found.");
-      }
-    }
+    // Moving to another account or type: it must exist (and the account be owned).
+    if (data.accountId) await accountService.getAccountById(data.accountId, userId);
+    if (data.transactionTypeId) await this.assertTransactionTypeExists(data.transactionTypeId);
 
     const updated = await transactionRepository.update(id, userId, data);
     return updated as unknown as Transaction;
   }
 
   async deleteTransaction(id: string, userId: string): Promise<null> {
-    const existing = await transactionRepository.findById(id, userId);
-
-    if (!existing) {
-      throw new AppError(404, ERROR_CODES.TRANSACTION_NOT_FOUND, "Transaction not found.");
-    }
-
+    await this.getTransactionById(id, userId);
     await transactionRepository.delete(id, userId);
     return null;
+  }
+
+  // ── Internals ─────────────────────────────────────────────────────────────
+
+  private async assertTransactionTypeExists(id: string): Promise<void> {
+    const transactionType = await transactionRepository.findTransactionTypeById(id);
+
+    if (!transactionType) {
+      throw new AppError(404, ERROR_CODES.NOT_FOUND, "Transaction type not found.");
+    }
   }
 }
 

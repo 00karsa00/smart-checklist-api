@@ -29,6 +29,8 @@ jobs:
         run: npm run typecheck
       - name: Lint
         run: npm run lint
+      - name: Duplicate code
+        run: npm run dup:check
       - name: Formatting
         run: npm run format:check
       - name: Unit tests

@@ -8,5 +8,7 @@ export type {
   HttpContext,
   HttpMethod,
   HttpServer,
+  IdParams,
+  NoParams,
   Route,
 } from "./types";

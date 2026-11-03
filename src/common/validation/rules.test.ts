@@ -1,6 +1,20 @@
 import { describe, expect, it } from "vitest";
 
-import { assertPageQuery, isDate, isEmail, isOneOf, isUuid, isUuidV4 } from "./rules";
+import { fakeContext } from "../../test/fake-context";
+import {
+  assertAtLeastOne,
+  assertOptional,
+  assertPageQuery,
+  idParamGuard,
+  isDate,
+  isEmail,
+  isNonEmptyString,
+  isOneOf,
+  isUuid,
+  isUuidV4,
+  orNull,
+  rejectFields,
+} from "./rules";
 
 describe("validation rules", () => {
   it("checks UUIDs", () => {
@@ -32,5 +46,42 @@ describe("validation rules", () => {
     expect(() => assertPageQuery({ limit: "101" })).toThrow(
       "Query param 'limit' must be an integer between 1 and 100.",
     );
+  });
+});
+
+describe("shared validators", () => {
+  it("idParamGuard names the entity in its messages", () => {
+    const guard = idParamGuard("Account");
+
+    expect(() => guard(fakeContext({ params: { id: "" } }))).toThrow("Account id is required.");
+    expect(() => guard(fakeContext({ params: { id: "abc" } }))).toThrow(
+      "Account id must be a valid UUID.",
+    );
+    expect(() =>
+      guard(fakeContext({ params: { id: "4b2c77c8-e65b-4232-a395-57bce4f05b86" } })),
+    ).not.toThrow();
+  });
+
+  it("assertAtLeastOne lists the accepted fields", () => {
+    expect(() => assertAtLeastOne({}, ["name", "email"])).toThrow(
+      "Request body must include at least one of: 'name', 'email'.",
+    );
+    expect(() => assertAtLeastOne({ email: "a@b.co" }, ["name", "email"])).not.toThrow();
+  });
+
+  it("rejectFields reports the first forbidden field", () => {
+    expect(() =>
+      rejectFields({ userId: "x", id: "y" }, ["id", "userId"], (f) => `No '${f}'.`),
+    ).toThrow("No 'id'.");
+  });
+
+  it("assertOptional only checks fields that were sent", () => {
+    expect(() => assertOptional({}, "note", isNonEmptyString, "Bad note.")).not.toThrow();
+    expect(() => assertOptional({ note: "" }, "note", isNonEmptyString, "Bad note.")).toThrow(
+      "Bad note.",
+    );
+    expect(() =>
+      assertOptional({ note: null }, "note", orNull(isNonEmptyString), "Bad note."),
+    ).not.toThrow();
   });
 });

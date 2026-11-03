@@ -1,18 +1,16 @@
-import { parsePageQuery } from "../../common/pagination";
-import { HttpContext } from "../../infrastructure/http";
+import { PageQuery, parsePageQuery } from "../../common/pagination";
+import { HttpContext, IdParams, NoParams } from "../../infrastructure/http";
 
-import { CreateUserDto, UpdateUserDto, UserIdParams, UserListQuery } from "./dto/user.dto";
+import { CreateUserDto, UpdateUserDto } from "./dto/user.dto";
 import { userService } from "./user.service";
 
 // Controllers translate the request into service arguments. No business rules.
 
-type NoParams = Record<string, never>;
-
-export function getUsers(ctx: HttpContext<NoParams, UserListQuery>) {
+export function getUsers(ctx: HttpContext<NoParams, PageQuery>) {
   return userService.listUsers(parsePageQuery(ctx.query));
 }
 
-export function getUser(ctx: HttpContext<UserIdParams>) {
+export function getUser(ctx: HttpContext<IdParams>) {
   return userService.getUserById(ctx.params.id);
 }
 
@@ -20,10 +18,10 @@ export function createUser(ctx: HttpContext<NoParams, NoParams, CreateUserDto>) 
   return userService.createUser(ctx.body);
 }
 
-export function updateUser(ctx: HttpContext<UserIdParams, NoParams, UpdateUserDto>) {
+export function updateUser(ctx: HttpContext<NoParams, UpdateUserDto>) {
   return userService.updateUser(ctx.params.id, ctx.body);
 }
 
-export function deleteUser(ctx: HttpContext<UserIdParams>) {
+export function deleteUser(ctx: HttpContext<IdParams>) {
   return userService.deleteUser(ctx.params.id);
 }

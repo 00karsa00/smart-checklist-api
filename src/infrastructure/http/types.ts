@@ -5,6 +5,15 @@ import { AuthenticatedUser } from "../../common/types/authenticated-user.type";
 
 export type HttpMethod = "get" | "post" | "put" | "patch" | "delete";
 
+/** Route params, query or body for endpoints that take none. */
+export type NoParams = Record<string, never>;
+
+/** Route params for `/:id` paths. */
+export interface IdParams {
+  id: string;
+  [key: string]: string;
+}
+
 /** Everything a guard or handler may read from (or attach to) a request. */
 export interface HttpContext<
   Params = Record<string, string>,

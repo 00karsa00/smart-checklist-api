@@ -1,3 +1,4 @@
+import { Guard } from "../../infrastructure/http";
 import { AppError } from "../errors/app.error";
 import { ERROR_CODES } from "../errors/error.codes";
 import { MAX_PAGE_LIMIT } from "../pagination";
@@ -64,4 +65,49 @@ export function assertPageQuery(query: { page?: string; limit?: string }): void 
       );
     }
   }
+}
+
+/** Accept null as well as values that pass `check`. */
+export function orNull(check: (value: unknown) => boolean) {
+  return (value: unknown): boolean => value === null || check(value);
+}
+
+/** Guard for `/:id` routes, e.g. idParamGuard("Account"). */
+export function idParamGuard(entity: string): Guard {
+  return (ctx) => {
+    const { id } = ctx.params;
+
+    if (!id) throw validationError(`${entity} id is required.`);
+    if (!isUuid(id)) throw validationError(`${entity} id must be a valid UUID.`);
+  };
+}
+
+/** Throw when none of `fields` is present (for partial updates). */
+export function assertAtLeastOne(body: Record<string, unknown>, fields: readonly string[]): void {
+  if (!fields.some((field) => body[field] !== undefined)) {
+    throw validationError(
+      `Request body must include at least one of: ${fields.map((f) => `'${f}'`).join(", ")}.`,
+    );
+  }
+}
+
+/** Throw on the first of `fields` the client sent but may not set. */
+export function rejectFields(
+  body: Record<string, unknown>,
+  fields: readonly string[],
+  message: (field: string) => string,
+): void {
+  for (const field of fields) {
+    if (body[field] !== undefined) throw validationError(message(field));
+  }
+}
+
+/** Throw `message` when `field` is present but fails `check`. Absent fields pass. */
+export function assertOptional(
+  body: Record<string, unknown>,
+  field: string,
+  check: (value: unknown) => boolean,
+  message: string,
+): void {
+  if (body[field] !== undefined && !check(body[field])) throw validationError(message);
 }

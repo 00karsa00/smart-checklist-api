@@ -1,6 +1,6 @@
 import { AppError } from "../../common/errors/app.error";
 import { ERROR_CODES } from "../../common/errors/error.codes";
-import { PaginatedData, buildPaginatedData } from "../../common/pagination";
+import { PaginatedData, buildPaginatedData, pageOffset } from "../../common/pagination";
 import { isUniqueViolation } from "../../infrastructure/database";
 
 import { CreateAccountDto, UpdateAccountDto, AccountListQuery } from "./dto/account.dto";
@@ -26,7 +26,7 @@ class AccountService {
   ): Promise<PaginatedData<Account>> {
     const safePage = page > 0 ? page : DEFAULT_PAGE;
     const safeLimit = limit > 0 ? limit : DEFAULT_LIMIT;
-    const offset = (safePage - 1) * safeLimit;
+    const offset = pageOffset({ page: safePage, limit: safeLimit });
 
     const { rows, count } = await accountRepository.findAll(userId, offset, safeLimit, filters);
 
@@ -49,39 +49,17 @@ class AccountService {
 
   async createAccount(data: CreateAccountDto, userId: string): Promise<Account> {
     // Prevent duplicate account numbers for the same user (when provided).
-    if (data.accountNumber) {
-      const existing = await accountRepository.findByAccountNumber(data.accountNumber, userId);
-
-      if (existing) {
-        throw new AppError(
-          409,
-          ERROR_CODES.ACCOUNT_ALREADY_EXISTS,
-          "An account with this account number already exists.",
-        );
-      }
-    }
+    if (data.accountNumber) await this.assertAccountNumberFree(data.accountNumber, userId);
 
     return this.createWithGeneratedId(data, userId);
   }
 
   async updateAccount(id: string, userId: string, data: UpdateAccountDto): Promise<Account> {
-    const existing = await accountRepository.findById(id, userId);
-
-    if (!existing) {
-      throw new AppError(404, ERROR_CODES.ACCOUNT_NOT_FOUND, "Account not found.");
-    }
+    const existing = await this.getAccountById(id, userId);
 
     // If changing account number, ensure it isn't taken by another account.
     if (data.accountNumber && data.accountNumber !== existing.accountNumber) {
-      const duplicate = await accountRepository.findByAccountNumber(data.accountNumber, userId);
-
-      if (duplicate) {
-        throw new AppError(
-          409,
-          ERROR_CODES.ACCOUNT_ALREADY_EXISTS,
-          "An account with this account number already exists.",
-        );
-      }
+      await this.assertAccountNumberFree(data.accountNumber, userId);
     }
 
     const updated = await accountRepository.update(id, userId, data);
@@ -94,12 +72,7 @@ class AccountService {
    * marked inactive so history and balances remain intact.
    */
   async deleteAccount(id: string, userId: string): Promise<null> {
-    const existing = await accountRepository.findById(id, userId);
-
-    if (!existing) {
-      throw new AppError(404, ERROR_CODES.ACCOUNT_NOT_FOUND, "Account not found.");
-    }
-
+    const existing = await this.getAccountById(id, userId);
     const transactionCount = await accountRepository.countTransactions(existing.id);
 
     if (transactionCount > 0) {
@@ -128,6 +101,18 @@ class AccountService {
   }
 
   // ── Internals ─────────────────────────────────────────────────────────────
+
+  private async assertAccountNumberFree(accountNumber: string, userId: string): Promise<void> {
+    const existing = await accountRepository.findByAccountNumber(accountNumber, userId);
+
+    if (existing) {
+      throw new AppError(
+        409,
+        ERROR_CODES.ACCOUNT_ALREADY_EXISTS,
+        "An account with this account number already exists.",
+      );
+    }
+  }
 
   /**
    * Generates the next per-user account id and creates the account, retrying a

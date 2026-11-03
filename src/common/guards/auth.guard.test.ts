@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { signToken } from "../../infrastructure/token";
 import { fakeContext } from "../../test/fake-context";
-import { authenticate, currentUserId } from "./auth.guard";
+import { authenticate, currentUserId, requireValidToken } from "./auth.guard";
 
 const USER_ID = "4b2c77c8-e65b-4232-a395-57bce4f05b86";
 
@@ -36,5 +36,17 @@ describe("authenticate", () => {
 describe("currentUserId", () => {
   it("refuses when no guard set a user", () => {
     expect(() => currentUserId(fakeContext())).toThrow("Authorization token is required.");
+  });
+});
+
+describe("requireValidToken", () => {
+  it("returns the claims of a valid token", () => {
+    expect(requireValidToken(signToken(USER_ID)).sub).toBe(USER_ID);
+  });
+
+  it("throws the same 401 the guard uses", () => {
+    expect(() => requireValidToken("x.y.z")).toThrow(
+      expect.objectContaining({ statusCode: 401, code: "UNAUTHORIZED", message: "Invalid token." }),
+    );
   });
 });

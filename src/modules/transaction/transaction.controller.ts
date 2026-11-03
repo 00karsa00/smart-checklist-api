@@ -1,18 +1,15 @@
 import { currentUserId } from "../../common/guards/auth.guard";
 import { parsePageQuery } from "../../common/pagination";
-import { HttpContext } from "../../infrastructure/http";
+import { HttpContext, IdParams, NoParams } from "../../infrastructure/http";
 
 import {
   CreateTransactionDto,
-  TransactionIdParams,
   TransactionListQuery,
   UpdateTransactionDto,
 } from "./dto/transaction.dto";
 import { transactionService } from "./transaction.service";
 
 // Controllers translate the request into service arguments. No business rules.
-
-type NoParams = Record<string, never>;
 
 export function getTransactions(ctx: HttpContext<NoParams, TransactionListQuery>) {
   const { page, limit } = parsePageQuery(ctx.query);
@@ -25,7 +22,7 @@ export function getTransactions(ctx: HttpContext<NoParams, TransactionListQuery>
   });
 }
 
-export function getTransaction(ctx: HttpContext<TransactionIdParams>) {
+export function getTransaction(ctx: HttpContext<IdParams>) {
   return transactionService.getTransactionById(ctx.params.id, currentUserId(ctx));
 }
 
@@ -33,12 +30,10 @@ export function createTransaction(ctx: HttpContext<NoParams, NoParams, CreateTra
   return transactionService.createTransaction(ctx.body, currentUserId(ctx));
 }
 
-export function updateTransaction(
-  ctx: HttpContext<TransactionIdParams, NoParams, UpdateTransactionDto>,
-) {
+export function updateTransaction(ctx: HttpContext<NoParams, UpdateTransactionDto>) {
   return transactionService.updateTransaction(ctx.params.id, currentUserId(ctx), ctx.body);
 }
 
-export function deleteTransaction(ctx: HttpContext<TransactionIdParams>) {
+export function deleteTransaction(ctx: HttpContext<IdParams>) {
   return transactionService.deleteTransaction(ctx.params.id, currentUserId(ctx));
 }

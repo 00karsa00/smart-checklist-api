@@ -1,6 +1,6 @@
 import { AppError } from "../../common/errors/app.error";
 import { ERROR_CODES } from "../../common/errors/error.codes";
-import { PaginatedData, buildPaginatedData } from "../../common/pagination";
+import { PaginatedData, buildPaginatedData, pageOffset } from "../../common/pagination";
 
 import { CreateUserDto, UpdateUserDto } from "./dto/user.dto";
 import { User } from "./types/user.type";
@@ -14,9 +14,8 @@ class UserService {
   async listUsers(payload: { page?: number; limit?: number } = {}): Promise<PaginatedData<User>> {
     const page = payload.page ?? DEFAULT_PAGE;
     const limit = payload.limit ?? DEFAULT_LIMIT;
-    const offset = (page - 1) * limit;
 
-    const { rows, count } = await userRepository.findAll(offset, limit);
+    const { rows, count } = await userRepository.findAll(pageOffset({ page, limit }), limit);
 
     return buildPaginatedData(rows, { page, limit, total: count });
   }

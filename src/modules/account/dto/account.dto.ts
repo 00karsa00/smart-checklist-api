@@ -1,3 +1,4 @@
+import { PageQuery } from "../../../common/pagination";
 import { AccountType, AccountStatus } from "../../../common/enums/account.enum";
 
 // ── Request body DTOs ─────────────────────────────────────────────────────────
@@ -37,14 +38,7 @@ export interface UpdateAccountDto {
 
 // ── Request param / query interfaces ─────────────────────────────────────────
 
-export interface AccountIdParams {
-  id: string;
-  [key: string]: string;
-}
-
-export interface AccountListQuery {
-  page?: string;
-  limit?: string;
+export interface AccountListQuery extends PageQuery {
   status?: string;
   type?: string;
   bank?: string;
