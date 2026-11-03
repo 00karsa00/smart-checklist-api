@@ -1,5 +1,5 @@
 {
-  "name": "personal-finance-backend",
+  "name": "api-skeleton",
   "version": "1.0.0",
   "main": "dist/main.js",
   "scripts": {
@@ -21,7 +21,7 @@
     "dup:check": "jscpd"
   },
   "license": "ISC",
-  "description": "Personal Finance API (Express + Sequelize + PostgreSQL)",
+  "description": "Backend skeleton (Express + Sequelize + PostgreSQL)",
   "dependencies": {
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",

@@ -9,7 +9,7 @@ async function bootstrap(): Promise<void> {
     logger.info("PostgreSQL connected successfully");
 
     const server = await createApp().listen(configuration.app.port);
-    logger.info(`Personal Finance API running on http://localhost:${server.port}`);
+    logger.info(`${configuration.app.name} running on http://localhost:${server.port}`);
   } catch (error) {
     logger.error("Failed to start application", { error: String(error) });
     process.exit(1);
