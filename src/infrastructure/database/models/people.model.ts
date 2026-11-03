@@ -16,11 +16,7 @@ import { Optional } from "sequelize";
 
 import { User } from "./user.model";
 import { BorrowLend } from "./borrow-lend.model";
-
-export enum PersonStatus {
-  ACTIVE = "active",
-  INACTIVE = "inactive",
-}
+import { PersonStatus } from "../../../common/enums/person.enum";
 
 interface PersonAttributes {
   id: string;
@@ -35,11 +31,10 @@ interface PersonAttributes {
   updatedAt: Date;
 }
 
-interface PersonCreationAttributes
-  extends Optional<
+type PersonCreationAttributes = Optional<
     PersonAttributes,
     "id" | "phoneNumber" | "upiId" | "status" | "notes" | "createdAt" | "updatedAt"
-  > {}
+  >;
 
 @Table({
   tableName: "people",

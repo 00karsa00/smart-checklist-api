@@ -26,8 +26,7 @@ interface SubcategoryAttributes {
   updatedAt: Date;
 }
 
-interface SubcategoryCreationAttributes
-  extends Optional<SubcategoryAttributes, "id" | "createdAt" | "updatedAt"> {}
+type SubcategoryCreationAttributes = Optional<SubcategoryAttributes, "id" | "createdAt" | "updatedAt">;
 
 @Table({
   tableName: "subcategories",

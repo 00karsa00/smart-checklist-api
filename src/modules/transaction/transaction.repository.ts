@@ -1,8 +1,10 @@
-import { Op } from "sequelize";
-
-import { AllTransaction } from "../../infrastructure/database/models/all-transactions.model";
-import { Account } from "../../infrastructure/database/models/accounts.model";
-import { TransactionType } from "../../infrastructure/database/models/transaction-types.model";
+import {
+  Account,
+  AllTransaction,
+  TransactionType,
+  Where,
+  between,
+} from "../../infrastructure/database";
 import {
   CreateTransactionDto,
   UpdateTransactionDto,
@@ -35,7 +37,7 @@ class TransactionRepository {
     limit: number,
     filters: TransactionListQuery,
   ): Promise<PaginatedTransactions> {
-    const where: Record<string, unknown> = { userId };
+    const where: Where = { userId };
 
     if (filters.accountId) {
       where["accountId"] = filters.accountId;
@@ -46,10 +48,10 @@ class TransactionRepository {
     }
 
     if (filters.startDate || filters.endDate) {
-      const dateFilter: Record<string, string> = {};
-      if (filters.startDate) dateFilter[Op.gte as unknown as string] = filters.startDate;
-      if (filters.endDate) dateFilter[Op.lte as unknown as string] = filters.endDate;
-      where["transactionDate"] = dateFilter;
+      where["transactionDate"] = between(
+        filters.startDate || undefined,
+        filters.endDate || undefined,
+      );
     }
 
     const { rows, count } = await AllTransaction.findAndCountAll({
@@ -61,6 +63,10 @@ class TransactionRepository {
     });
 
     return { rows, count };
+  }
+
+  async findTransactionTypeById(id: string): Promise<TransactionType | null> {
+    return TransactionType.findByPk(id);
   }
 
   async findById(id: string, userId: string): Promise<AllTransaction | null> {

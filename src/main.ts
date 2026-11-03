@@ -1,27 +1,19 @@
-// import "reflect-metadata";
-
-// import { AppDataSource } from "./infrastructure/database/datasource";
+import { createApp } from "./app";
 import { configuration } from "./config/configuration";
-import app from "./app";
-import { sequelize } from "./infrastructure/database/sequelize";
+import { connectDatabase } from "./infrastructure/database";
+import { logger } from "./infrastructure/logger";
 
-async function bootstrap() {
+async function bootstrap(): Promise<void> {
   try {
-    // await AppDataSource.initialize();
-    await sequelize.authenticate();
+    await connectDatabase();
+    logger.info("PostgreSQL connected successfully");
 
-    console.log("PostgreSQL connected successfully");
-
-    app.listen(configuration.app.port, () => {
-      console.log(
-        `Personal Finance API running on http://localhost:${configuration.app.port}`,
-      );
-    });
+    const server = await createApp().listen(configuration.app.port);
+    logger.info(`Personal Finance API running on http://localhost:${server.port}`);
   } catch (error) {
-    console.error("Failed to start application", error);
-
+    logger.error("Failed to start application", { error: String(error) });
     process.exit(1);
   }
 }
 
-bootstrap();
+void bootstrap();

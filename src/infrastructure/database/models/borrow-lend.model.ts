@@ -33,11 +33,10 @@ interface BorrowLendAttributes {
   updatedAt: Date;
 }
 
-interface BorrowLendCreationAttributes
-  extends Optional<
+type BorrowLendCreationAttributes = Optional<
     BorrowLendAttributes,
     "id" | "referenceCode" | "paymentMethodId" | "createdAt" | "updatedAt"
-  > {}
+  >;
 
 @Table({
   tableName: "borrow_lend",

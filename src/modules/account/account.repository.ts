@@ -1,9 +1,12 @@
-import { Op } from "sequelize";
-
-import { Account, AccountStatus, AccountType } from "../../infrastructure/database/models/accounts.model";
-import { AllTransaction } from "../../infrastructure/database/models/all-transactions.model";
+import { AccountStatus, AccountType } from "../../common/enums/account.enum";
+import {
+  Account,
+  AllTransaction,
+  Where,
+  containsText,
+  matchAny,
+} from "../../infrastructure/database";
 import { CreateAccountDto, UpdateAccountDto, AccountListQuery } from "./dto/account.dto";
-import { nextAccountId } from "./account.id-generator";
 
 export interface PaginatedAccounts {
   rows: Account[];
@@ -13,7 +16,7 @@ export interface PaginatedAccounts {
 /**
  * Data-access layer for accounts. Every method is scoped by `userId` so a user
  * can never read or mutate another user's account. This layer has no knowledge
- * of HTTP, JWT, or the Express request — it only talks to the database.
+ * of HTTP, JWT, or the request — it only talks to the database.
  */
 class AccountRepository {
   async findAll(
@@ -22,49 +25,44 @@ class AccountRepository {
     limit: number,
     filters: AccountListQuery,
   ): Promise<PaginatedAccounts> {
-    const where: Record<string, unknown> = { userId };
+    const where: Where = { userId };
 
     if (filters.status) {
-      where["status"] = filters.status;
+      where.status = filters.status;
     }
 
     if (filters.type) {
-      where["type"] = filters.type;
+      where.type = filters.type;
     }
 
     if (filters.bank) {
-      where["bank"] = { [Op.iLike]: `%${filters.bank}%` };
+      where.bank = containsText(filters.bank);
     }
 
     // Free-text search across the human-relevant fields.
     if (filters.search) {
-      const term = `%${filters.search}%`;
-      where[Op.or as unknown as string] = [
-        { accountName: { [Op.iLike]: term } },
-        { bank: { [Op.iLike]: term } },
-        { accountId: { [Op.iLike]: term } },
-        { accountNumber: { [Op.iLike]: term } },
-      ];
+      const term = containsText(filters.search);
+      matchAny(where, [
+        { accountName: term },
+        { bank: term },
+        { accountId: term },
+        { accountNumber: term },
+      ]);
     }
 
-    const { rows, count } = await Account.findAndCountAll({
+    return Account.findAndCountAll({
       where,
       order: [["createdAt", "DESC"]],
       offset,
       limit,
     });
-
-    return { rows, count };
   }
 
   async findById(id: string, userId: string): Promise<Account | null> {
     return Account.findOne({ where: { id, userId } });
   }
 
-  async findByAccountNumber(
-    accountNumber: string,
-    userId: string,
-  ): Promise<Account | null> {
+  async findByAccountNumber(accountNumber: string, userId: string): Promise<Account | null> {
     return Account.findOne({ where: { accountNumber, userId } });
   }
 
@@ -90,36 +88,26 @@ class AccountRepository {
   ): Promise<PaginatedAccounts> {
     const { page, limit, search } = options;
     const offset = (page - 1) * limit;
-    const where: Record<string, unknown> = {
+    const where: Where = {
       userId,
       status: AccountStatus.ACTIVE,
     };
 
     if (search) {
-      const term = `%${search}%`;
-      where[Op.or as unknown as string] = [
-        { accountName: { [Op.iLike]: term } },
-        { bank: { [Op.iLike]: term } },
-        { accountNumber: { [Op.iLike]: term } },
-      ];
+      const term = containsText(search);
+      matchAny(where, [{ accountName: term }, { bank: term }, { accountNumber: term }]);
     }
 
-    const { rows, count } = await Account.findAndCountAll({
+    return Account.findAndCountAll({
       where,
       attributes: ["id", "accountName", "bank", "accountNumber"],
       order: [["accountName", "ASC"]],
       offset,
       limit,
     });
-
-    return { rows, count };
   }
 
-  async create(
-    data: CreateAccountDto,
-    userId: string,
-    accountId: string,
-  ): Promise<Account> {
+  async create(data: CreateAccountDto, userId: string, accountId: string): Promise<Account> {
     return Account.create({
       accountId,
       accountName: data.accountName,
@@ -142,11 +130,7 @@ class AccountRepository {
    * status transitions to CLOSED and no closingDate is supplied, today's date
    * is recorded automatically.
    */
-  async update(
-    id: string,
-    userId: string,
-    data: UpdateAccountDto,
-  ): Promise<Account | null> {
+  async update(id: string, userId: string, data: UpdateAccountDto): Promise<Account | null> {
     const account = await Account.findOne({ where: { id, userId } });
 
     if (!account) return null;

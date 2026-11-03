@@ -1,13 +1,7 @@
 import { AppError } from "../../common/errors/app.error";
 import { ERROR_CODES } from "../../common/errors/error.codes";
-import {
-  ApiSuccessResponse,
-  PaginatedData,
-  buildPaginatedData,
-  successResponse,
-} from "../../common/responses/api-response";
-import { Account } from "../../infrastructure/database/models/accounts.model";
-import { TransactionType as TransactionTypeModel } from "../../infrastructure/database/models/transaction-types.model";
+import { PaginatedData, buildPaginatedData } from "../../common/pagination";
+import { accountRepository } from "../account/account.repository";
 
 import {
   CreateTransactionDto,
@@ -17,16 +11,13 @@ import {
 import { Transaction } from "./types/transaction.type";
 import { transactionRepository } from "./transaction.repository";
 
-const DEFAULT_PAGE = 1;
-const DEFAULT_LIMIT = 10;
-
 class TransactionService {
   async getAllTransactions(
     userId: string,
     page: number,
     limit: number,
     filters: TransactionListQuery,
-  ): Promise<ApiSuccessResponse<PaginatedData<Transaction>>> {
+  ): Promise<PaginatedData<Transaction>> {
     const offset = (page - 1) * limit;
     const { rows, count } = await transactionRepository.findAll(
       userId,
@@ -35,19 +26,17 @@ class TransactionService {
       filters,
     );
 
-    const data = buildPaginatedData(rows as unknown as Transaction[], {
+    return buildPaginatedData(rows as unknown as Transaction[], {
       page,
       limit,
       total: count,
     });
-
-    return successResponse(data, undefined);
   }
 
   async getTransactionById(
     id: string,
     userId: string,
-  ): Promise<ApiSuccessResponse<Transaction>> {
+  ): Promise<Transaction> {
     const transaction = await transactionRepository.findById(id, userId);
 
     if (!transaction) {
@@ -58,17 +47,15 @@ class TransactionService {
       );
     }
 
-    return successResponse(transaction as unknown as Transaction, undefined);
+    return transaction as unknown as Transaction;
   }
 
   async createTransaction(
     data: CreateTransactionDto,
     userId: string,
-  ): Promise<ApiSuccessResponse<Transaction>> {
+  ): Promise<Transaction> {
     // Verify the account exists and belongs to this user
-    const account = await Account.findOne({
-      where: { id: data.accountId, userId },
-    });
+    const account = await accountRepository.findById(data.accountId, userId);
 
     if (!account) {
       throw new AppError(
@@ -79,9 +66,7 @@ class TransactionService {
     }
 
     // Verify the transaction type exists
-    const transactionType = await TransactionTypeModel.findByPk(
-      data.transactionTypeId,
-    );
+    const transactionType = await transactionRepository.findTransactionTypeById(data.transactionTypeId);
 
     if (!transactionType) {
       throw new AppError(
@@ -92,14 +77,14 @@ class TransactionService {
     }
 
     const transaction = await transactionRepository.create(data, userId);
-    return successResponse(transaction as unknown as Transaction, undefined);
+    return transaction as unknown as Transaction;
   }
 
   async updateTransaction(
     id: string,
     userId: string,
     data: UpdateTransactionDto,
-  ): Promise<ApiSuccessResponse<Transaction>> {
+  ): Promise<Transaction> {
     const existing = await transactionRepository.findById(id, userId);
 
     if (!existing) {
@@ -112,9 +97,7 @@ class TransactionService {
 
     // If switching account, verify new account belongs to user
     if (data.accountId) {
-      const account = await Account.findOne({
-        where: { id: data.accountId, userId },
-      });
+      const account = await accountRepository.findById(data.accountId, userId);
 
       if (!account) {
         throw new AppError(
@@ -127,9 +110,7 @@ class TransactionService {
 
     // If switching transaction type, verify it exists
     if (data.transactionTypeId) {
-      const transactionType = await TransactionTypeModel.findByPk(
-        data.transactionTypeId,
-      );
+      const transactionType = await transactionRepository.findTransactionTypeById(data.transactionTypeId);
 
       if (!transactionType) {
         throw new AppError(
@@ -141,13 +122,13 @@ class TransactionService {
     }
 
     const updated = await transactionRepository.update(id, userId, data);
-    return successResponse(updated as unknown as Transaction, undefined);
+    return updated as unknown as Transaction;
   }
 
   async deleteTransaction(
     id: string,
     userId: string,
-  ): Promise<ApiSuccessResponse<null>> {
+  ): Promise<null> {
     const existing = await transactionRepository.findById(id, userId);
 
     if (!existing) {
@@ -159,7 +140,7 @@ class TransactionService {
     }
 
     await transactionRepository.delete(id, userId);
-    return successResponse(null, undefined);
+    return null;
   }
 }
 

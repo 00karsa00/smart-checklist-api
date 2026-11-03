@@ -16,17 +16,7 @@ import { Optional } from "sequelize";
 
 import { TransactionType } from "./transaction-types.model";
 import { BorrowLend } from "./borrow-lend.model";
-
-// Fixed set of borrow/lend movement kinds, mirrored from the sheet's
-// BorrowLendTransactionType tab.
-export enum BorrowLendKind {
-  BORROWED = "Borrowed",
-  BORROW_REPAID = "Borrow Repaid",
-  LENT = "Lent",
-  LENT_RECOVERED = "Lent Recovered",
-  UPI_SENT = "UPI Sent",
-  UPI_RECEIVED = "UPI Received",
-}
+import { BorrowLendKind } from "../../../common/enums/borrow-lend.enum";
 
 interface BorrowLendTypeAttributes {
   id: string;
@@ -37,11 +27,10 @@ interface BorrowLendTypeAttributes {
   updatedAt: Date;
 }
 
-interface BorrowLendTypeCreationAttributes
-  extends Optional<
+type BorrowLendTypeCreationAttributes = Optional<
     BorrowLendTypeAttributes,
     "id" | "transactionTypeId" | "createdAt" | "updatedAt"
-  > {}
+  >;
 
 @Table({
   tableName: "borrow_lend_types",

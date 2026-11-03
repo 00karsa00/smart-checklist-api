@@ -9,11 +9,7 @@ import {
   AllowNull,
 } from "sequelize-typescript";
 import { Optional } from "sequelize";
-
-export enum PaymentMethodStatus {
-  ACTIVE = "active",
-  INACTIVE = "inactive",
-}
+import { PaymentMethodStatus } from "../../../common/enums/payment-method.enum";
 
 interface PaymentMethodAttributes {
   id: string;
@@ -25,11 +21,10 @@ interface PaymentMethodAttributes {
   updatedAt: Date;
 }
 
-interface PaymentMethodCreationAttributes
-  extends Optional<
+type PaymentMethodCreationAttributes = Optional<
     PaymentMethodAttributes,
     "id" | "description" | "status" | "createdAt" | "updatedAt"
-  > {}
+  >;
 
 @Table({
   tableName: "payment_methods",

@@ -41,8 +41,7 @@ interface AllTransactionAttributes {
   updatedAt: Date;
 }
 
-interface AllTransactionCreationAttributes
-  extends Optional<
+type AllTransactionCreationAttributes = Optional<
     AllTransactionAttributes,
     | "id"
     | "paymentMethod"
@@ -54,7 +53,7 @@ interface AllTransactionCreationAttributes
     | "note"
     | "createdAt"
     | "updatedAt"
-  > {}
+  >;
 
 @Table({
   tableName: "all_transactions",

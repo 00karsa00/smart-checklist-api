@@ -1,123 +1,51 @@
-import { Request, Response, NextFunction } from "express";
-
-import { ApiSuccessResponse, PaginatedData } from "../../common/responses/api-response";
-import "../../common/types/request-context.type";
+import { currentUserId } from "../../common/guards/auth.guard";
+import { parsePageQuery } from "../../common/pagination";
+import { HttpContext } from "../../infrastructure/http";
 
 import {
-  CreateAccountDto,
-  UpdateAccountDto,
   AccountIdParams,
   AccountListQuery,
+  CreateAccountDto,
+  UpdateAccountDto,
 } from "./dto/account.dto";
-import { Account } from "./types/account.type";
 import { accountService } from "./account.service";
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Controllers translate the request into service arguments. No business rules.
 
-function withRequestId<T>(
-  response: ApiSuccessResponse<T>,
-  req: Request,
-): ApiSuccessResponse<T> {
-  return { ...response, requestId: req.headers["x-request-id"] };
+type NoParams = Record<string, never>;
+
+export function getAccounts(ctx: HttpContext<NoParams, AccountListQuery>) {
+  const { page, limit } = parsePageQuery(ctx.query);
+  const { status, type, bank, search } = ctx.query;
+  return accountService.getAllAccounts(currentUserId(ctx), page, limit, {
+    status,
+    type,
+    bank,
+    search,
+  });
 }
 
-// ── Controllers ───────────────────────────────────────────────────────────────
-
-export async function getAccounts(
-  req: Request<Record<string, never>, ApiSuccessResponse<PaginatedData<Account>>, never, AccountListQuery & Record<string, string | undefined>>,
-  res: Response<ApiSuccessResponse<PaginatedData<Account>>>,
-  next: NextFunction,
-): Promise<void> {
-  try {
-    const userId = req.user!.userId;
-    const page = Math.max(1, parseInt((req.query.page as string) ?? "1", 10) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt((req.query.limit as string) ?? "10", 10) || 10));
-
-    const result = await accountService.getAllAccounts(userId, page, limit, {
-      status: req.query.status as string | undefined,
-      type: req.query.type as string | undefined,
-      bank: req.query.bank as string | undefined,
-      search: req.query.search as string | undefined,
-    });
-
-    res.status(200).json(withRequestId(result, req as unknown as Request));
-  } catch (error) {
-    next(error);
-  }
+export function getAccount(ctx: HttpContext<AccountIdParams>) {
+  return accountService.getAccountById(ctx.params.id, currentUserId(ctx));
 }
 
-export async function getAccount(
-  req: Request<AccountIdParams>,
-  res: Response<ApiSuccessResponse<Account>>,
-  next: NextFunction,
-): Promise<void> {
-  try {
-    const result = await accountService.getAccountById(req.params.id, req.user!.userId);
-    res.status(200).json(withRequestId(result, req));
-  } catch (error) {
-    next(error);
-  }
+export function createAccount(ctx: HttpContext<NoParams, NoParams, CreateAccountDto>) {
+  return accountService.createAccount(ctx.body, currentUserId(ctx));
 }
 
-export async function createAccount(
-  req: Request<Record<string, never>, ApiSuccessResponse<Account>, CreateAccountDto>,
-  res: Response<ApiSuccessResponse<Account>>,
-  next: NextFunction,
-): Promise<void> {
-  try {
-    const result = await accountService.createAccount(req.body, req.user!.userId);
-    res.status(201).json(withRequestId(result, req));
-  } catch (error) {
-    next(error);
-  }
+export function updateAccount(ctx: HttpContext<AccountIdParams, NoParams, UpdateAccountDto>) {
+  return accountService.updateAccount(ctx.params.id, currentUserId(ctx), ctx.body);
 }
 
-export async function updateAccount(
-  req: Request<AccountIdParams, ApiSuccessResponse<Account>, UpdateAccountDto>,
-  res: Response<ApiSuccessResponse<Account>>,
-  next: NextFunction,
-): Promise<void> {
-  try {
-    const result = await accountService.updateAccount(
-      req.params.id,
-      req.user!.userId,
-      req.body,
-    );
-    res.status(200).json(withRequestId(result, req));
-  } catch (error) {
-    next(error);
-  }
+export function deleteAccount(ctx: HttpContext<AccountIdParams>) {
+  return accountService.deleteAccount(ctx.params.id, currentUserId(ctx));
 }
 
-export async function deleteAccount(
-  req: Request<AccountIdParams>,
-  res: Response<ApiSuccessResponse<null>>,
-  next: NextFunction,
-): Promise<void> {
-  try {
-    const result = await accountService.deleteAccount(req.params.id, req.user!.userId);
-    res.status(200).json(withRequestId(result, req));
-  } catch (error) {
-    next(error);
-  }
-}
-
-
-export async function getActiveAccountDropdownList(
-  req: Request<Record<string, never>, ApiSuccessResponse<PaginatedData<Account>>, never, AccountListQuery & Record<string, string | undefined>>,
-  res: Response<ApiSuccessResponse<PaginatedData<Account>>>,
-  next: NextFunction,
-): Promise<void> {
-  try {
-    const page = Math.max(1, parseInt(req.query.page ?? "1", 10) || 1);
-    const limit = Math.min(100, Math.max(1, parseInt(req.query.limit ?? "100", 10) || 100));
-    const result = await accountService.getActiveAccountDropdownList(req.user!.userId, {
-      page,
-      limit,
-      search: req.query.search ?? null,
-    });
-    res.status(200).json(withRequestId(result, req));
-  } catch (error) {
-    next(error);
-  }
+export function getActiveAccountDropdownList(ctx: HttpContext<NoParams, AccountListQuery>) {
+  const { page, limit } = parsePageQuery(ctx.query, 100);
+  return accountService.getActiveAccountDropdownList(currentUserId(ctx), {
+    page,
+    limit,
+    search: ctx.query.search ?? null,
+  });
 }

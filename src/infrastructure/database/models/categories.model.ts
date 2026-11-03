@@ -28,11 +28,10 @@ interface CategoryAttributes {
   updatedAt: Date;
 }
 
-interface CategoryCreationAttributes
-  extends Optional<
+type CategoryCreationAttributes = Optional<
     CategoryAttributes,
     "id" | "transactionTypeId" | "createdAt" | "updatedAt"
-  > {}
+  >;
 
 @Table({
   tableName: "categories",

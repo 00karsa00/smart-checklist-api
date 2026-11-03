@@ -1,30 +1,14 @@
-require("dotenv").config();
+import { readBooleanEnv, readEnv, readNumberEnv } from "../infrastructure/env";
 
-module.exports = {
-  development: {
-    username: process.env.DATABASE_USERNAME,
-    password: process.env.DATABASE_PASSWORD,
-    database: process.env.DATABASE_NAME,
-    host: process.env.DATABASE_HOST,
-    port: Number(process.env.DATABASE_PORT),
-    dialect: "postgres",
-  },
-
-  test: {
-    username: process.env.DATABASE_USERNAME,
-    password: process.env.DATABASE_PASSWORD,
-    database: `${process.env.DATABASE_NAME}_test`,
-    host: process.env.DATABASE_HOST,
-    port: Number(process.env.DATABASE_PORT),
-    dialect: "postgres",
-  },
-
-  production: {
-    username: process.env.DATABASE_USERNAME,
-    password: process.env.DATABASE_PASSWORD,
-    database: process.env.DATABASE_NAME,
-    host: process.env.DATABASE_HOST,
-    port: Number(process.env.DATABASE_PORT),
-    dialect: "postgres",
-  },
+// Kept separate from configuration.ts so the migration CLI can load it without
+// needing app secrets such as JWT_SECRET.
+export const databaseConfig = {
+  host: readEnv("DATABASE_HOST", "localhost"),
+  port: readNumberEnv("DATABASE_PORT", 5432),
+  username: readEnv("DATABASE_USERNAME", "postgres"),
+  password: readEnv("DATABASE_PASSWORD", ""),
+  database: readEnv("DATABASE_NAME", "personal_finance"),
+  logging: readBooleanEnv("DATABASE_LOGGING", false),
 };
+
+export type DatabaseConfig = typeof databaseConfig;

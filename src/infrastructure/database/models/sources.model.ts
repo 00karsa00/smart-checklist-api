@@ -14,11 +14,7 @@ import {
 import { Optional } from "sequelize";
 
 import { User } from "./user.model";
-
-export enum SourceStatus {
-  ACTIVE = "active",
-  INACTIVE = "inactive",
-}
+import { SourceStatus } from "../../../common/enums/source.enum";
 
 interface SourceAttributes {
   id: string;
@@ -31,11 +27,10 @@ interface SourceAttributes {
   updatedAt: Date;
 }
 
-interface SourceCreationAttributes
-  extends Optional<
+type SourceCreationAttributes = Optional<
     SourceAttributes,
     "id" | "sourceType" | "status" | "createdAt" | "updatedAt"
-  > {}
+  >;
 
 @Table({
   tableName: "sources",
