@@ -4,7 +4,7 @@ import { ApiModule, Route } from "../../infrastructure/http";
 import { generateToken, validateToken } from "./auth.controller";
 import { validateGenerateTokenBody, validateValidateTokenBody } from "./auth.validator";
 
-// Mints a token for any active user id, with no password. Local testing only;
+// Mints a token for any user id (UUID v4), with no password. Local testing only;
 // off in production unless AUTH_ALLOW_DEV_TOKENS=true.
 const devTokenRoute: Route = {
   method: "post",

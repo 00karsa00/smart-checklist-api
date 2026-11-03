@@ -2,6 +2,17 @@
 
 Changes to the backend skeleton. Versions follow [Semantic Versioning](https://semver.org/): a major version may need changes in modules, minor versions add features, patch versions fix bugs.
 
+## 2.0.0 — 2026-11-03
+
+The skeleton no longer contains business code. Breaking: the removed endpoints and tables are gone.
+
+- **Removed modules:** `account`, `transaction`, `user` (and their endpoints `/api/accounts`, `/api/transactions`, `/api/users`).
+- **Removed database files:** every model, migration, and seeder (users, accounts, transaction types, all transactions, payment methods, sources, categories, subcategories, people, borrow/lend). The `models/`, `migrations/`, and `seeders/` folders stay, empty. Existing databases are not touched.
+- **Removed:** domain enums (`common/enums`), spreadsheet reference codes (`common/utils/reference-code`), business error codes.
+- **Auth:** `POST /api/auth/token` signs any UUID v4 without a user lookup (still off in production); `/token/validate` no longer checks a users table.
+- **New reference module `item`:** in-memory CRUD at `/api/items` showing every layer, a service that takes its repository in the constructor, and service/validator tests. Copy it to start a feature.
+- **Neutral naming:** `APP_NAME` setting (health check and logs), package `api-skeleton`, default database `app`.
+
 ## 1.1.0 — 2026-11-03
 
 One implementation for every shared helper. API responses are unchanged (verified by replaying 75 requests) except one message: `POST /api/auth/token/validate` errors now end with a period ("Invalid token.", "Token has expired."), the same as every other auth error.

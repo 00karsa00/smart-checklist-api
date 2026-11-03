@@ -7,7 +7,7 @@ export const databaseConfig = {
   port: readNumberEnv("DATABASE_PORT", 5432),
   username: readEnv("DATABASE_USERNAME", "postgres"),
   password: readEnv("DATABASE_PASSWORD", ""),
-  database: readEnv("DATABASE_NAME", "personal_finance"),
+  database: readEnv("DATABASE_NAME", "app"),
   logging: readBooleanEnv("DATABASE_LOGGING", false),
 };
 

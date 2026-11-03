@@ -1,3 +1,4 @@
+import { configuration } from "../../config/configuration";
 import { ApiModule } from "../../infrastructure/http";
 
 export const healthModule: ApiModule = {
@@ -8,7 +9,7 @@ export const healthModule: ApiModule = {
       path: "/",
       handler: async () => ({
         status: "ok",
-        service: "personal-finance-backend",
+        service: configuration.app.name,
         timestamp: new Date().toISOString(),
       }),
     },

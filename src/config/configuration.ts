@@ -7,6 +7,7 @@ const env = readEnv("NODE_ENV", "development");
 // document them in .env.example.
 export const configuration = {
   app: {
+    name: readEnv("APP_NAME", "api"),
     env,
     isProduction: env === "production",
     port: readNumberEnv("PORT", 3001),

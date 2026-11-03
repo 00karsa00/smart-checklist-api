@@ -1,32 +1,11 @@
-import { Sequelize } from "sequelize-typescript";
+import { ModelCtor, Sequelize } from "sequelize-typescript";
 
 import { databaseConfig } from "../../config/database.config";
-import { User } from "./models/user.model";
-import { Account } from "./models/accounts.model";
-import { TransactionType } from "./models/transaction-types.model";
-import { AllTransaction } from "./models/all-transactions.model";
-import { PaymentMethod } from "./models/payment-methods.model";
-import { Source } from "./models/sources.model";
-import { Category } from "./models/categories.model";
-import { Subcategory } from "./models/subcategories.model";
-import { Person } from "./models/people.model";
-import { BorrowLendType } from "./models/borrow-lend-types.model";
-import { BorrowLend } from "./models/borrow-lend.model";
 
-// Add a model here when you create a new table.
-const MODELS = [
-  User,
-  Account,
-  TransactionType,
-  AllTransaction,
-  PaymentMethod,
-  Source,
-  Category,
-  Subcategory,
-  Person,
-  BorrowLendType,
-  BorrowLend,
-];
+// Register every model here when you create a table, e.g.
+//   import { Item } from "./models/item.model";
+//   const MODELS = [Item];
+const MODELS: ModelCtor[] = [];
 
 const sequelize = new Sequelize(
   databaseConfig.database,
