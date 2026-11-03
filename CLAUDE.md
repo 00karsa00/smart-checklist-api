@@ -8,4 +8,5 @@ Read README.md sections "One place for libraries" and "Modules" before changing 
 - Validators are `Guard`s that throw `AppError`. Reuse `src/common/validation/rules.ts`.
 - Skeleton (structural) changes go on the `skeleton` branch, then merge into the working branch. Log them in SKELETON_CHANGELOG.md.
 - One implementation per helper: search `src/common` and `src/infrastructure` before writing a function (README "Reuse before you write"). To change behaviour, edit the original or add a parameter; never add a second version. Services reuse each other's `get…ById` for existence/ownership checks.
+- Declare object shapes with `type`, not `interface` (ESLint enforces it; combine shapes with `&`).
 - Run `npm run check` before committing; it includes `dup:check`, which fails on duplicated code.

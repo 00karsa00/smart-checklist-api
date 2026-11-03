@@ -2,14 +2,14 @@ import jwt from "jsonwebtoken";
 
 import { configuration } from "../config/configuration";
 
-export interface TokenClaims {
+export type TokenClaims = {
   /** User id. */
   sub: string;
   /** Issued at, seconds since epoch. */
   iat?: number;
   /** Expires at, seconds since epoch. */
   exp?: number;
-}
+};
 
 export type TokenCheck =
   { ok: true; claims: TokenClaims } | { ok: false; reason: "expired" | "invalid" };

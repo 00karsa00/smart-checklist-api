@@ -9,11 +9,11 @@ import { errorResponse, successResponse } from "../../common/responses/api-respo
 import { logger } from "../logger";
 import { ApiModule, Guard, HttpApp, HttpContext, Route } from "./types";
 
-export interface HttpAppOptions {
+export type HttpAppOptions = {
   apiPrefix: string;
   corsOrigin: string;
   modules: ApiModule[];
-}
+};
 
 /** Build the web app from module definitions. The only file that knows Express. */
 export function createHttpApp({ apiPrefix, corsOrigin, modules }: HttpAppOptions): HttpApp {

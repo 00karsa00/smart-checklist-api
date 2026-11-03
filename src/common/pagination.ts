@@ -3,27 +3,27 @@
 
 export const MAX_PAGE_LIMIT = 100;
 
-export interface Pagination {
+export type Pagination = {
   page: number;
   limit: number;
   total: number;
   totalPages: number;
-}
+};
 
-export interface PaginatedData<T> {
+export type PaginatedData<T> = {
   items: T[];
   pagination: Pagination;
-}
+};
 
-export interface PageRequest {
+export type PageRequest = {
   page: number;
   limit: number;
-}
+};
 
-export interface PageQuery {
+export type PageQuery = {
   page?: string;
   limit?: string;
-}
+};
 
 /** Read ?page= and ?limit= with safe bounds (page ≥ 1, 1 ≤ limit ≤ 100). */
 export function parsePageQuery(query: PageQuery, defaultLimit = 10): PageRequest {

@@ -1,5 +1,5 @@
 /** Item returned to API clients. */
-export interface Item {
+export type Item = {
   id: string;
   name: string;
   description: string | null;
@@ -7,4 +7,4 @@ export interface Item {
   userId: string;
   createdAt: Date;
   updatedAt: Date;
-}
+};

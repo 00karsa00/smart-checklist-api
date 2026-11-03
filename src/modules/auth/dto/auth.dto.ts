@@ -1,7 +1,7 @@
-export interface GenerateTokenDto {
+export type GenerateTokenDto = {
   userId: string;
-}
+};
 
-export interface ValidateTokenDto {
+export type ValidateTokenDto = {
   token: string;
-}
+};
