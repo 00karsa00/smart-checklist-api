@@ -40,7 +40,7 @@ curl localhost:3001/api/items -H "Authorization: Bearer $TOKEN"
 | `npm run typecheck`  | TypeScript check                                                      |
 | `npm run lint`       | ESLint, including the architecture rules below                        |
 | `npm run format`     | Format with Prettier (`format:check` only checks)                     |
-| `npm test`           | Unit tests (Vitest, no database needed)                               |
+| `npm test`           | Unit tests (Vitest; `*.test.ts` next to the code — none yet)          |
 | `npm run dup:check`  | Fail if the same block of code appears in two places                  |
 | `npm run check`      | Everything CI runs: typecheck, lint, duplicates, format, tests, build |
 | `npm run db:migrate` | Apply migrations (`db:migrate:undo` to roll back one)                 |
@@ -76,7 +76,6 @@ src/
 │   ├── health/              # GET /health
 │   ├── auth/                # development tokens
 │   └── item/                # reference module: copy it for new features
-└── test/                    # test helpers
 ```
 
 ## One place for libraries
@@ -139,7 +138,6 @@ src/modules/item/
 ├── item.service.ts       # business rules; returns plain data
 ├── item.repository.ts    # data access, always scoped by userId
 ├── item.validator.ts     # guards that throw AppError on bad input
-├── item.*.test.ts        # service and validator tests
 ├── dto/item.dto.ts       # request shapes
 └── types/item.type.ts    # response shape
 ```
@@ -168,7 +166,7 @@ Rules of each layer:
      its method names.
 3. Add the module's error codes to `common/errors/error.codes.ts`.
 4. Add one line to `src/modules/index.ts`.
-5. Update the tests next to the code.
+5. Add tests next to the code (`<name>.service.test.ts`, `<name>.validator.test.ts`).
 
 Nothing else changes. Delete the `item` module once you no longer need it as a
 reference (remove its line from `modules/index.ts` and its error code).
