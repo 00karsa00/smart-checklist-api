@@ -18,8 +18,12 @@ export function requireEnv(name: string): string {
   return value;
 }
 
+/** A number setting; 0 is a value (not "unset"). Missing or not a number → fallback. */
 export function readNumberEnv(name: string, fallback: number): number {
-  return Number(process.env[name]) || fallback;
+  const value = process.env[name];
+  if (value === undefined || value.trim() === "") return fallback;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : fallback;
 }
 
 export function readBooleanEnv(name: string, fallback: boolean): boolean {

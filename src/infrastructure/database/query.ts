@@ -10,6 +10,26 @@ export function containsText(text: string) {
   return { [Op.iLike]: `%${text}%` };
 }
 
+/** Any value except `value`. */
+export function notEqual<T>(value: T) {
+  return { [Op.ne]: value };
+}
+
+/** Any of these values (SQL IN). */
+export function oneOf<T>(values: readonly T[]) {
+  return { [Op.in]: values };
+}
+
+/**
+ * Add "at least one of these conditions" to a where object, alongside any
+ * others already there (unlike `matchAny`, several can be combined).
+ */
+export function requireAny(where: Where, conditions: Where[]): Where {
+  const and = (where[Op.and] as Where[] | undefined) ?? [];
+  where[Op.and] = [...and, { [Op.or]: conditions }];
+  return where;
+}
+
 /** Inclusive range; either end may be left out. Returns undefined when both are. */
 export function between<T>(from?: T, to?: T) {
   if (from === undefined && to === undefined) return undefined;
@@ -25,7 +45,11 @@ export function matchAny(where: Where, conditions: Where[]): Where {
   return where;
 }
 
-/** True when a write failed because it broke a UNIQUE constraint. */
-export function isUniqueViolation(error: unknown): boolean {
-  return error instanceof UniqueConstraintError;
+/**
+ * True when a write failed because it broke a UNIQUE constraint; with `column`
+ * (e.g. "email"), only when that column caused it.
+ */
+export function isUniqueViolation(error: unknown, column?: string): boolean {
+  if (!(error instanceof UniqueConstraintError)) return false;
+  return column === undefined || Object.hasOwn(error.fields ?? {}, column);
 }

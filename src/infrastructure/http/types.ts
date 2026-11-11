@@ -25,6 +25,8 @@ export type HttpContext<
   /** Parsed JSON body. Guards may normalise fields in place. */
   body: Body;
   readonly requestId: string;
+  /** Caller's IP address (behind a proxy, enable the framework's trust-proxy setting). */
+  readonly ip: string;
   /** Set by the authenticate guard. */
   user?: AuthenticatedUser;
   header(name: string): string | undefined;
@@ -37,6 +39,29 @@ export type AnyHttpContext = HttpContext<any, any, any>;
 /** Runs before the handler. Throw an AppError to stop the request. */
 export type Guard = (ctx: AnyHttpContext) => void | Promise<void>;
 
+/**
+ * A file sent as-is instead of the JSON envelope. Create it with
+ * `fileResponse(...)` and return it from a handler (e.g. a download).
+ */
+export class FileResponse {
+  constructor(
+    readonly data: Buffer,
+    readonly contentType: string,
+    readonly fileName: string,
+    /** "inline" shows it in the browser (images, PDF); "attachment" downloads it. */
+    readonly disposition: "inline" | "attachment" = "inline",
+  ) {}
+}
+
+export function fileResponse(
+  data: Buffer,
+  contentType: string,
+  fileName: string,
+  disposition: "inline" | "attachment" = "inline",
+): FileResponse {
+  return new FileResponse(data, contentType, fileName, disposition);
+}
+
 /** Returns the `data` part of the response; the envelope is added for you. */
 export type Handler = (ctx: AnyHttpContext) => Promise<unknown>;
 
@@ -48,6 +73,12 @@ export type Route = {
   guards?: Guard[];
   /** Success status code. Defaults to 200. */
   status?: number;
+  /**
+   * Accept the request body as raw bytes (a file upload) instead of JSON:
+   * `ctx.body` is then a Buffer when the Content-Type is one of `types`.
+   * Bodies over `maxBytes` are refused with 413.
+   */
+  rawBody?: { types: readonly string[]; maxBytes: number };
   handler: Handler;
 };
 

@@ -1,4 +1,6 @@
 export { createHttpApp } from "./express-app";
+export { FileResponse, fileResponse } from "./types";
+export { failureLimit, RateCounter, rateLimit } from "./rate-limit";
 export type {
   AnyHttpContext,
   ApiModule,

@@ -1,7 +1,6 @@
 import { defineConfig } from "vitest/config";
 
-// Unit tests live next to the code as *.test.ts. None yet: passWithNoTests keeps
-// `npm test` and CI green until the first one is added.
+// Unit tests live next to the code as *.test.ts; shared fakes are in src/test-support.
 export default defineConfig({
   test: {
     include: ["src/**/*.test.ts"],

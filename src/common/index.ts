@@ -8,8 +8,15 @@ export { ERROR_CODES } from "./errors/error.codes";
 export type { ErrorCode } from "./errors/error.codes";
 
 // Authentication
-export { authenticate, currentUserId, requireValidToken } from "./guards/auth.guard";
-export type { AuthenticatedUser } from "./types/authenticated-user.type";
+export {
+  authenticate,
+  authenticateAs,
+  currentSessionId,
+  currentUserId,
+  requireValidToken,
+} from "./guards/auth.guard";
+export { ACCOUNT_KINDS } from "./types/authenticated-user.type";
+export type { AccountKind, AuthenticatedUser } from "./types/authenticated-user.type";
 
 // Response envelope
 export { errorResponse, successResponse } from "./responses/api-response";
@@ -22,21 +29,38 @@ export type { PageQuery, PageRequest, PaginatedData, Pagination } from "./pagina
 // Validation
 export {
   assertAtLeastOne,
+  assertOptionalBooleanQuery,
+  assertOptionalColor,
   assertOptional,
   assertPageQuery,
+  assertRequiredText,
   idParamGuard,
+  isBoolean,
   isDate,
+  isCurrencyCode,
   isEmail,
+  isHexColor,
+  isIntegerBetween,
+  isLocaleTag,
   isNonEmptyString,
   isNonNegativeNumber,
   isOneOf,
   isPositiveNumber,
+  isTimeZone,
   isUuid,
   isUuidV4,
+  normaliseOptionalText,
   orNull,
   rejectFields,
+  rejectUnknownFields,
   validationError,
 } from "./validation/rules";
 
 // Utilities
 export { assignDefined } from "./utils/assign-defined";
+export { addDays, addMonths, daysBetween, financialMonth, todayIn } from "./utils/dates";
+export type { DatePeriod } from "./utils/dates";
+export { parseCsv, parseCsvLines, toCsv } from "./utils/csv";
+export { currencyDigits, minorToPlain, toMinorUnits } from "./utils/money";
+export type { CsvRow, CsvValue } from "./utils/csv";
+export { DETECTABLE_FILE_TYPES, detectFileType } from "./utils/file-type";

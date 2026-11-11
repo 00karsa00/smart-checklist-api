@@ -32,7 +32,7 @@ export default tseslint.config(
   // library (web framework, ORM, JWT, logger) never touches business code.
   {
     files: ["src/**/*.ts"],
-    ignores: ["src/infrastructure/**", "src/**/*.test.ts"],
+    ignores: ["src/infrastructure/**", "src/**/*.test.ts", "src/test-e2e/**"],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -66,5 +66,10 @@ export default tseslint.config(
       ],
       "no-console": ["error"],
     },
+  },
+  // API tests read loosely typed response bodies.
+  {
+    files: ["src/test-e2e/**/*.ts"],
+    rules: { "@typescript-eslint/no-explicit-any": "off" },
   },
 );

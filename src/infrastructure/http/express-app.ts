@@ -7,7 +7,7 @@ import { AppError } from "../../common/errors/app.error";
 import { ERROR_CODES } from "../../common/errors/error.codes";
 import { errorResponse, successResponse } from "../../common/responses/api-response";
 import { logger } from "../logger";
-import { ApiModule, Guard, HttpApp, HttpContext, Route } from "./types";
+import { ApiModule, FileResponse, Guard, HttpApp, HttpContext, Route } from "./types";
 
 export type HttpAppOptions = {
   apiPrefix: string;
@@ -20,7 +20,9 @@ export function createHttpApp({ apiPrefix, corsOrigin, modules }: HttpAppOptions
   const app = express();
 
   app.disable("x-powered-by");
-  app.use(cors({ origin: corsOrigin, credentials: true }));
+  // One origin, or several separated by commas (e.g. the app and its test build).
+  const origins = corsOrigin.split(",").map((origin) => origin.trim());
+  app.use(cors({ origin: origins.length === 1 ? origins[0] : origins, credentials: true }));
   app.use(express.json({ limit: "1mb" }));
   app.use(express.urlencoded({ extended: true }));
   app.use(assignRequestId);
@@ -60,7 +62,15 @@ function buildRouter(module: ApiModule): express.Router {
   }
 
   for (const route of module.routes) {
-    router[route.method](route.path, ...(route.guards ?? []).map(runGuard), runHandler(route));
+    const bodyParsers = route.rawBody
+      ? [express.raw({ type: [...route.rawBody.types], limit: route.rawBody.maxBytes })]
+      : [];
+    router[route.method](
+      route.path,
+      ...bodyParsers,
+      ...(route.guards ?? []).map(runGuard),
+      runHandler(route),
+    );
   }
 
   return router;
@@ -86,6 +96,8 @@ function contextOf(req: Request, res: Response): HttpContext {
       req.body = value;
     },
     requestId: String(req.headers["x-request-id"]),
+    // IPv4 callers can arrive as "::ffff:1.2.3.4"; keep the plain IPv4 form for logs.
+    ip: (req.ip ?? "").replace(/^::ffff:(?=\d+\.\d+\.\d+\.\d+$)/, ""),
     header: (name) => req.get(name),
   };
 
@@ -109,11 +121,30 @@ function runHandler(route: Route): RequestHandler {
     try {
       const ctx = contextOf(req, res);
       const data = await route.handler(ctx);
+      if (data instanceof FileResponse) {
+        sendFile(res, data);
+        return;
+      }
       res.status(route.status ?? 200).json(successResponse(data, ctx.requestId));
     } catch (error) {
       next(error);
     }
   };
+}
+
+function sendFile(res: Response, file: FileResponse): void {
+  // RFC 6266: an ASCII fallback plus the exact UTF-8 name.
+  const asciiName = file.fileName.replace(/[^\x20-\x7e]|["\\]/g, "_");
+  res.setHeader("Content-Type", file.contentType);
+  res.setHeader("Content-Length", String(file.data.length));
+  res.setHeader(
+    "Content-Disposition",
+    `${file.disposition}; filename="${asciiName}"; filename*=UTF-8''${encodeURIComponent(file.fileName)}`,
+  );
+  // The declared type is the only one the browser may use.
+  res.setHeader("X-Content-Type-Options", "nosniff");
+  res.setHeader("Cache-Control", "private, no-store");
+  res.status(200).end(file.data);
 }
 
 // ── Cross-cutting middleware ─────────────────────────────────────────────────
@@ -150,8 +181,29 @@ function handleError(error: unknown, req: Request, res: Response, _next: NextFun
     return;
   }
 
+  // Body parser failures: malformed JSON or a body over the size limit.
+  const parserError = bodyParserError(error);
+  if (parserError) {
+    logger.error(parserError.message, { requestId, code: parserError.code });
+    res
+      .status(parserError.statusCode)
+      .json(errorResponse(parserError.code, parserError.message, requestId));
+    return;
+  }
+
   logger.error("Unhandled application error", { requestId, error });
   res
     .status(500)
     .json(errorResponse(ERROR_CODES.INTERNAL_SERVER_ERROR, "Internal server error", requestId));
+}
+
+function bodyParserError(error: unknown): AppError | null {
+  const type = (error as { type?: unknown } | null)?.type;
+  if (type === "entity.too.large") {
+    return new AppError(413, ERROR_CODES.PAYLOAD_TOO_LARGE, "The request body is too large.");
+  }
+  if (type === "entity.parse.failed") {
+    return new AppError(400, ERROR_CODES.BAD_REQUEST, "The request body is not valid JSON.");
+  }
+  return null;
 }

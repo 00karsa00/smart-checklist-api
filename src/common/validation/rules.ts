@@ -32,12 +32,63 @@ export function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+export function isBoolean(value: unknown): value is boolean {
+  return typeof value === "boolean";
+}
+
 export function isPositiveNumber(value: unknown): value is number {
   return typeof value === "number" && isFinite(value) && value > 0;
 }
 
 export function isNonNegativeNumber(value: unknown): value is number {
   return typeof value === "number" && isFinite(value) && value >= 0;
+}
+
+/** A whole number from `min` to `max`, inclusive. */
+export function isIntegerBetween(value: unknown, min: number, max: number): value is number {
+  return Number.isInteger(value) && (value as number) >= min && (value as number) <= max;
+}
+
+// Built-in Intl lists, so codes stay in step with the runtime's ICU data.
+const CURRENCIES = new Set(Intl.supportedValuesOf("currency"));
+
+/** A colour as #RRGGBB. */
+export function isHexColor(value: unknown): value is string {
+  return typeof value === "string" && /^#[0-9a-fA-F]{6}$/.test(value);
+}
+
+/** An ISO 4217 currency code in upper case, e.g. "INR". */
+export function isCurrencyCode(value: unknown): value is string {
+  return typeof value === "string" && /^[A-Z]{3}$/.test(value) && CURRENCIES.has(value);
+}
+
+/**
+ * An IANA time zone name, e.g. "Asia/Kolkata". Any name the runtime can use is
+ * accepted, older spellings too: Node and browsers list some zones under one
+ * name only ("Asia/Calcutta"), so checking against that list refused the
+ * default zone. Offsets such as "+05:30" are not names and are refused.
+ */
+export function isTimeZone(value: unknown): value is string {
+  if (typeof value !== "string" || !/^[A-Za-z_]+(\/[A-Za-z0-9_+-]+)*$/.test(value)) return false;
+  try {
+    new Intl.DateTimeFormat("en", { timeZone: value });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+// Language, optional script, optional region: "en", "en-IN", "zh-Hant-TW", "es-419".
+const LOCALE_RE = /^[a-z]{2,3}(-[A-Z][a-z]{3})?(-([A-Z]{2}|\d{3}))?$/;
+
+/** A language tag such as "en-IN", in canonical form. */
+export function isLocaleTag(value: unknown): value is string {
+  if (typeof value !== "string" || !LOCALE_RE.test(value)) return false;
+  try {
+    return Intl.getCanonicalLocales(value)[0] === value;
+  } catch {
+    return false;
+  }
 }
 
 export function isOneOf(value: unknown, allowed: readonly string[]): value is string {
@@ -100,6 +151,80 @@ export function rejectFields(
   for (const field of fields) {
     if (body[field] !== undefined) throw validationError(message(field));
   }
+}
+
+/** Require `body[field]` as non-empty text of at most `maxLength`, trimmed in place. */
+export function assertRequiredText(
+  body: Record<string, unknown>,
+  field: string,
+  maxLength: number,
+): void {
+  const value = body[field];
+  if (!isNonEmptyString(value)) {
+    throw validationError(`Field '${field}' is required and must be a non-empty string.`);
+  }
+  body[field] = value.trim();
+  if ((body[field] as string).length > maxLength) {
+    throw validationError(`Field '${field}' must not exceed ${maxLength} characters.`);
+  }
+}
+
+/**
+ * Optional text: trimmed in place; "" or null (or only spaces) becomes null.
+ * With `maxLength`, longer text is refused.
+ */
+export function normaliseOptionalText(
+  body: Record<string, unknown>,
+  field: string,
+  maxLength?: number,
+): void {
+  const value = body[field];
+  if (value === undefined) return;
+  if (value === null || value === "") {
+    body[field] = null;
+    return;
+  }
+  if (typeof value !== "string") throw validationError(`Field '${field}' must be text.`);
+  const text = value.trim();
+  if (maxLength !== undefined && text.length > maxLength) {
+    throw validationError(`Field '${field}' must not exceed ${maxLength} characters.`);
+  }
+  body[field] = text || null;
+}
+
+/** Optional colour: "" or null clears it; otherwise #RRGGBB, stored upper-case. */
+export function assertOptionalColor(body: Record<string, unknown>, field = "color"): void {
+  normaliseOptionalText(body, field);
+  if (typeof body[field] === "string") body[field] = (body[field] as string).toUpperCase();
+  assertOptional(
+    body,
+    field,
+    (value) => value === null || isHexColor(value),
+    `Field '${field}' must look like #1E88E5.`,
+  );
+}
+
+/** An optional "true"/"false" query parameter. */
+export function assertOptionalBooleanQuery(query: Record<string, unknown>, field: string): void {
+  assertOptional(
+    query,
+    field,
+    (value) => value === "true" || value === "false",
+    `Query param '${field}' must be true or false.`,
+  );
+}
+
+/** Throw on the first field the client sent that is not in `allowed`. */
+export function rejectUnknownFields(
+  body: Record<string, unknown>,
+  allowed: readonly string[],
+  message: (field: string) => string,
+): void {
+  rejectFields(
+    body,
+    Object.keys(body).filter((field) => !allowed.includes(field)),
+    message,
+  );
 }
 
 /** Throw `message` when `field` is present but fails `check`. Absent fields pass. */

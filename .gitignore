@@ -10,7 +10,13 @@ dist/
 .env.*
 !.env.example
 
+# uploaded files (UPLOAD_DIR)
+storage/
+
 # tooling
 coverage/
 *.log
 .DS_Store
+
+# Editor workspace files
+*.code-workspace

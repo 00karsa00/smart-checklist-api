@@ -1,5 +1,5 @@
 {
-  "name": "api-skeleton",
+  "name": "smart-personal-checklist-api",
   "version": "1.0.0",
   "main": "dist/main.js",
   "scripts": {
@@ -12,6 +12,9 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "vitest run --config vitest.e2e.config.mts",
+    "test:cleanup": "tsx src/test-e2e/cleanup.ts",
+    "test:admins": "tsx src/test-e2e/seed-admins.ts",
     "check": "npm run typecheck && npm run lint && npm run dup:check && npm run format:check && npm test && npm run build",
     "db:migrate": "npm run build && sequelize-cli db:migrate",
     "db:migrate:undo": "npm run build && sequelize-cli db:migrate:undo",

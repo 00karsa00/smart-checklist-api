@@ -5,6 +5,7 @@
   "threshold": 0,
   "ignore": [
     "**/*.test.ts",
+    "**/*.e2e.ts",
     "src/infrastructure/database/models/**",
     "src/infrastructure/database/migrations/**",
     "src/infrastructure/database/seeders/**"

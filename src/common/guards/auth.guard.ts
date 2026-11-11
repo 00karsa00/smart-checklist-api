@@ -2,6 +2,7 @@ import { AnyHttpContext, Guard } from "../../infrastructure/http";
 import { TokenClaims, verifyToken } from "../../infrastructure/token";
 import { AppError } from "../errors/app.error";
 import { ERROR_CODES } from "../errors/error.codes";
+import { ACCOUNT_KINDS, AccountKind } from "../types/authenticated-user.type";
 
 const BEARER = "Bearer ";
 
@@ -18,6 +19,10 @@ export function requireValidToken(token: string): TokenClaims {
       ? new AppError(401, ERROR_CODES.TOKEN_EXPIRED, "Token has expired.")
       : new AppError(401, ERROR_CODES.UNAUTHORIZED, "Invalid token.");
   }
+  // Tokens issued before account kinds existed are refused.
+  if (!(ACCOUNT_KINDS as readonly string[]).includes(check.claims.kind)) {
+    throw new AppError(401, ERROR_CODES.UNAUTHORIZED, "Invalid token.");
+  }
 
   return check.claims;
 }
@@ -28,11 +33,27 @@ export const authenticate: Guard = (ctx) => {
 
   if (!header || !header.startsWith(BEARER)) throw missingToken();
 
-  ctx.user = { userId: requireValidToken(header.slice(BEARER.length)).sub };
+  const claims = requireValidToken(header.slice(BEARER.length));
+  ctx.user = { userId: claims.sub, kind: claims.kind as AccountKind, sessionId: claims.sid };
 };
+
+/** Like `authenticate`, but only for tokens of one account kind (403 for others). */
+export function authenticateAs(kind: AccountKind): Guard {
+  return (ctx) => {
+    authenticate(ctx);
+    if (ctx.user?.kind !== kind) {
+      throw new AppError(403, ERROR_CODES.FORBIDDEN, "Your account cannot use this endpoint.");
+    }
+  };
+}
 
 /** The signed-in user's id. Use on routes behind `authenticate`. */
 export function currentUserId(ctx: AnyHttpContext): string {
   if (!ctx.user) throw missingToken();
   return ctx.user.userId;
+}
+
+/** The signed-in session's id, when the token names one. Use on routes behind `authenticate`. */
+export function currentSessionId(ctx: AnyHttpContext): string | undefined {
+  return ctx.user?.sessionId;
 }
