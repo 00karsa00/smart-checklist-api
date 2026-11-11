@@ -15,6 +15,7 @@ import { NotificationModel, NotificationSettingModel } from "./models/notificati
 import { AdminAuditLogModel } from "./models/admin-audit-log.model";
 import { ProjectModel, WorkspaceModel } from "./models/workspace.model";
 import { LabelModel } from "./models/label.model";
+import { TaskModel, TaskTagModel } from "./models/task.model";
 
 // Register every model here when you create a table, e.g.
 //   import { Item } from "./models/item.model";
@@ -35,6 +36,8 @@ const MODELS: ModelCtor[] = [
   WorkspaceModel,
   ProjectModel,
   LabelModel,
+  TaskModel,
+  TaskTagModel,
 ];
 
 const sequelize = new Sequelize(

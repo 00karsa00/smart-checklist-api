@@ -52,7 +52,7 @@ describe("workspaces", () => {
     const [personal, work] = await api.send("GET", "/workspaces", undefined, token);
     await api.send("POST", "/projects", { workspaceId: work.id, name: "Launch" }, token);
     const busy = await api.call("DELETE", `/workspaces/${work.id}`, undefined, token);
-    expect([busy.status, busy.code]).toEqual([409, "WORKSPACE_HAS_PROJECTS"]);
+    expect([busy.status, busy.code]).toEqual([409, "WORKSPACE_NOT_EMPTY"]);
 
     expect((await api.call("DELETE", `/workspaces/${personal.id}`, undefined, token)).status).toBe(
       200,

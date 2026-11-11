@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { addDays, financialMonth, todayIn } from "./dates";
+import { addDays, financialMonth, timeIn, todayIn } from "./dates";
 
 describe("financialMonth", () => {
   it.each([
@@ -29,5 +29,14 @@ describe("todayIn", () => {
     expect(todayIn("UTC", lateUtc)).toBe("2026-11-05");
     expect(todayIn("Asia/Kolkata", lateUtc)).toBe("2026-11-06");
     expect(todayIn("America/New_York", new Date("2026-11-06T03:00:00Z"))).toBe("2026-11-05");
+  });
+});
+
+describe("timeIn", () => {
+  it("gives the 24-hour time of day in a time zone", () => {
+    const moment = new Date("2026-11-12T09:05:00Z");
+    expect(timeIn("Asia/Kolkata", moment)).toBe("14:35");
+    expect(timeIn("UTC", moment)).toBe("09:05");
+    expect(timeIn("America/New_York", new Date("2026-11-12T04:30:00Z"))).toBe("23:30");
   });
 });

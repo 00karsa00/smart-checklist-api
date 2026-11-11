@@ -1,5 +1,7 @@
 import { AppError, ERROR_CODES } from "../../common";
 
+import { isForeignKeyViolation } from "../../infrastructure/database";
+
 import { withUniqueColumns } from "../accounts";
 import { profileService, ProfileService } from "../profile/profile.service";
 import {
@@ -69,20 +71,26 @@ export class WorkspaceService {
     return this.canUseWorkspace(userId, id);
   }
 
-  /** Only an empty workspace, and never the last one. */
+  /**
+   * Only an empty workspace, and never the last one. What it holds (projects,
+   * tasks) is found by the database, so modules that add things to workspaces
+   * need no change here.
+   */
   async deleteWorkspace(id: string, userId: string): Promise<null> {
     await this.canUseWorkspace(userId, id);
-    if ((await this.workspaces.countProjects(id, userId)) > 0) {
-      throw new AppError(
-        409,
-        ERROR_CODES.WORKSPACE_HAS_PROJECTS,
-        "This workspace has projects. Move or delete them first.",
-      );
-    }
     if ((await this.workspaces.findWorkspaces(userId)).length <= 1) {
       throw new AppError(409, ERROR_CODES.WORKSPACE_LAST, "You need at least one workspace.");
     }
-    await this.workspaces.deleteWorkspace(id, userId);
+    try {
+      await this.workspaces.deleteWorkspace(id, userId);
+    } catch (error) {
+      if (!isForeignKeyViolation(error)) throw error;
+      throw new AppError(
+        409,
+        ERROR_CODES.WORKSPACE_NOT_EMPTY,
+        "This workspace has projects or tasks. Move or delete them first.",
+      );
+    }
     return null;
   }
 

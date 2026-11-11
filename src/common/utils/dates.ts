@@ -11,6 +11,16 @@ export function todayIn(timeZone: string, now = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone }).format(now);
 }
 
+/** The time of day in a time zone as HH:MM (24-hour), e.g. timeIn("Asia/Kolkata"). */
+export function timeIn(timeZone: string, now = new Date()): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone,
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(now);
+}
+
 export function addDays(date: string, days: number): string {
   const next = toDate(date);
   next.setUTCDate(next.getUTCDate() + days);

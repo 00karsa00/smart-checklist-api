@@ -3,6 +3,7 @@ export type { DbTransaction } from "./connection";
 export {
   between,
   containsText,
+  isForeignKeyViolation,
   isUniqueViolation,
   matchAny,
   notEqual,
@@ -25,6 +26,7 @@ export { AppUserModel } from "./models/app-user.model";
 export { NotificationModel, NotificationSettingModel } from "./models/notification.model";
 export { ProjectModel, WorkspaceModel } from "./models/workspace.model";
 export { LabelModel } from "./models/label.model";
+export { TaskModel, TaskTagModel } from "./models/task.model";
 export type {
   LoginLogTable,
   PasswordTable,

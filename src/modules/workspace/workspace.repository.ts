@@ -82,10 +82,6 @@ export class WorkspaceRepository {
     return new Map(rows.map((row) => [row.workspaceId, Number(row.count)]));
   }
 
-  async countProjects(workspaceId: string, userId: string): Promise<number> {
-    return ProjectModel.count({ where: { workspaceId, userId } });
-  }
-
   async findProjects(userId: string, filter: ProjectFilter): Promise<Project[]> {
     const rows = await ProjectModel.findAll({
       where: {

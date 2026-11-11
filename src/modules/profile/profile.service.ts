@@ -1,4 +1,4 @@
-import { assignDefined, todayIn } from "../../common";
+import { assignDefined, timeIn, todayIn } from "../../common";
 import { configuration } from "../../config/configuration";
 
 import { AccountDirectory, ChangePasswordDto, SessionInfo } from "../accounts";
@@ -41,6 +41,13 @@ export class ProfileService {
   /** Today's date (YYYY-MM-DD) in the user's time zone. */
   async today(userId: string): Promise<string> {
     return todayIn((await this.getSettings(userId)).timeZone);
+  }
+
+  /** The user's local date and time now: { date: "YYYY-MM-DD", time: "HH:MM" }. */
+  async now(userId: string): Promise<{ date: string; time: string }> {
+    const { timeZone } = await this.getSettings(userId);
+    const now = new Date();
+    return { date: todayIn(timeZone, now), time: timeIn(timeZone, now) };
   }
 
   /** Change some settings; the others keep their current value. */

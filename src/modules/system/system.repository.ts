@@ -12,6 +12,7 @@ export const USAGE_TABLES: Readonly<Record<string, string>> = {
   workspaces: "workspace",
   projects: "project",
   labels: "label",
+  tasks: "task",
   notifications: "notification",
 };
 

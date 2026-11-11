@@ -1,4 +1,4 @@
-import { Op, UniqueConstraintError } from "sequelize";
+import { ForeignKeyConstraintError, Op, UniqueConstraintError } from "sequelize";
 
 // Query building blocks for repositories, so repositories never import the ORM.
 // Each helper returns a value for one field in a `where` object.
@@ -52,4 +52,9 @@ export function matchAny(where: Where, conditions: Where[]): Where {
 export function isUniqueViolation(error: unknown, column?: string): boolean {
   if (!(error instanceof UniqueConstraintError)) return false;
   return column === undefined || Object.hasOwn(error.fields ?? {}, column);
+}
+
+/** True when a write failed because a row it removes or changes is still referenced. */
+export function isForeignKeyViolation(error: unknown): boolean {
+  return error instanceof ForeignKeyConstraintError;
 }
