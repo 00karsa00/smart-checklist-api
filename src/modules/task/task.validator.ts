@@ -6,6 +6,7 @@ import {
   assertRequiredText,
   idParamGuard,
   isDate,
+  isIntegerBetween,
   isOneOf,
   isUuid,
   normaliseOptionalText,
@@ -15,6 +16,7 @@ import {
 } from "../../common";
 import { Guard } from "../../infrastructure/http";
 
+import { REPEAT_FREQUENCIES } from "./task.repeat";
 import { DUE_FILTERS, TASK_PRIORITIES, TASK_STATUSES } from "./types/task.type";
 
 type Body = Record<string, unknown>;
@@ -36,6 +38,34 @@ const oneOf = (field: string, allowed: readonly string[]) =>
     (value: unknown) => isOneOf(value, allowed),
     `Field '${field}' must be one of: ${allowed.join(", ")}.`,
   ] as const;
+
+const REPEAT_MESSAGE =
+  "Field 'repeat' must be null or { frequency: daily | weekly | monthly | yearly, interval?: 1–99, weekdays?: [0–6] (weekly only) }.";
+
+/** A repeat rule, or null; `interval` defaults to 1 and weekdays are sorted. */
+function repeatField(body: Body) {
+  const value = body.repeat;
+  if (value === undefined || value === null) return;
+  if (typeof value !== "object" || Array.isArray(value)) throw validationError(REPEAT_MESSAGE);
+  const rule = value as Body;
+  rejectUnknownFields(rule, ["frequency", "interval", "weekdays"], () => REPEAT_MESSAGE);
+  rule.interval ??= 1;
+  const weekdays = rule.weekdays;
+  const weekdaysOk =
+    weekdays === undefined ||
+    (rule.frequency === "weekly" &&
+      Array.isArray(weekdays) &&
+      weekdays.length > 0 &&
+      weekdays.every((day) => isIntegerBetween(day, 0, 6)));
+  if (
+    !isOneOf(rule.frequency, REPEAT_FREQUENCIES) ||
+    !isIntegerBetween(rule.interval, 1, 99) ||
+    !weekdaysOk
+  ) {
+    throw validationError(REPEAT_MESSAGE);
+  }
+  if (weekdays) rule.weekdays = [...new Set(weekdays as number[])].sort((a, b) => a - b);
+}
 
 /** Every field a create or update may carry, apart from where the task goes. */
 function details(body: Body) {
@@ -85,6 +115,7 @@ function details(body: Body) {
   );
   // The same tag twice is the same tag.
   if (Array.isArray(body.tagIds)) body.tagIds = [...new Set(body.tagIds)];
+  repeatField(body);
   if (body.projectId && body.workspaceId) {
     throw validationError(
       "Send a projectId or a workspaceId, not both: a project has its workspace.",
@@ -100,6 +131,7 @@ const FIELDS = [
   "dueDate",
   "dueTime",
   "remindAt",
+  "repeat",
   "projectId",
   "workspaceId",
   "categoryId",

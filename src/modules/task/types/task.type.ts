@@ -1,5 +1,7 @@
 import { PaginatedData } from "../../../common";
 
+import { RepeatRule } from "../task.repeat";
+
 export const TASK_STATUSES = ["todo", "in_progress", "done"] as const;
 export type TaskStatus = (typeof TASK_STATUSES)[number];
 
@@ -26,6 +28,10 @@ export type Task = {
   dueTime: string | null;
   /** When to remind: "YYYY-MM-DDTHH:MM" in the user's time zone, or null. */
   remindAt: string | null;
+  /** How it repeats, or null. Completing it adds the next copy. */
+  repeat: RepeatRule | null;
+  /** The copy added when this repeating task was completed, or null. */
+  nextId: string | null;
   /** Where it sits: a project (and that project's workspace), or a workspace alone. */
   workspaceId: string;
   projectId: string | null;

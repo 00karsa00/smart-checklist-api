@@ -28,6 +28,8 @@ type TaskAttributes = {
   dueDate: string | null;
   dueTime: string | null;
   remindAt: string | null;
+  repeat: object | null;
+  nextId: string | null;
   completedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -45,6 +47,8 @@ type TaskOptional =
   | "dueDate"
   | "dueTime"
   | "remindAt"
+  | "repeat"
+  | "nextId"
   | "completedAt"
   | "createdAt"
   | "updatedAt";
@@ -103,6 +107,15 @@ export class TaskModel extends Model<TaskAttributes, Optional<TaskAttributes, Ta
   /** "YYYY-MM-DDTHH:MM", local to the user. */
   @Column(DataType.STRING(16))
   declare remindAt: string | null;
+
+  /** How it repeats (see task.repeat.ts), or null. */
+  @Column(DataType.JSONB)
+  declare repeat: object | null;
+
+  /** The copy added when this repeating task was completed. */
+  @ForeignKey(() => TaskModel)
+  @Column(DataType.UUID)
+  declare nextId: string | null;
 
   @Column(DataType.DATE)
   declare completedAt: Date | null;

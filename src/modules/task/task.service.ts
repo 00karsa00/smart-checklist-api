@@ -1,6 +1,7 @@
 import {
   addDays,
   AppError,
+  daysBetween,
   buildPaginatedData,
   ERROR_CODES,
   pageOffset,
@@ -13,6 +14,7 @@ import { profileService, ProfileService } from "../profile/profile.service";
 import { workspaceService, WorkspaceService } from "../workspace/workspace.service";
 import { CreateTaskDto, UpdateTaskDto } from "./dto/task.dto";
 import { TaskFields, TaskFilter, taskRepository, TaskRepository, TaskRow } from "./task.repository";
+import { nextDueDate, RepeatRule } from "./task.repeat";
 import { dueRange, isOverdue, priorityFromNumber, priorityToNumber } from "./task.rules";
 import { DayCount, DueFilter, Task, TaskDetail, TaskList, TaskStatus } from "./types/task.type";
 
@@ -77,11 +79,9 @@ export class TaskService {
     } else {
       place = await this.placement(userId, { projectId, workspaceId });
     }
-    const id = await this.tasks.create(
-      userId,
-      { ...this.fields(rest), ...place, title: rest.title },
-      tagIds,
-    );
+    const fields = this.fields(rest);
+    this.checkRepeat({ ...fields, parentId: parentId ?? null }, fields);
+    const id = await this.tasks.create(userId, { ...fields, ...place, title: rest.title }, tagIds);
     return this.get(id, userId);
   }
 
@@ -100,7 +100,12 @@ export class TaskService {
     if (after.dueTime && !after.dueDate) {
       throw validationError("Field 'dueTime' needs a due date.");
     }
+    if (rest.repeat !== undefined || rest.dueDate !== undefined) this.checkRepeat(after, fields);
     await this.tasks.update(id, userId, fields, tagIds);
+    // Completing a repeating task adds the next copy (once, even if reopened and done again).
+    if (fields.status === "done" && current.status !== "done" && after.repeat && !after.nextId) {
+      await this.addNext(userId, { ...after, id });
+    }
     return this.get(id, userId);
   }
 
@@ -134,6 +139,61 @@ export class TaskService {
   }
 
   // ── Internals ─────────────────────────────────────────────────────────────
+
+  /**
+   * A repeat rule needs a due date and a top-level task. Monthly and yearly
+   * rules keep to the due date's day of the month (set in `fields`).
+   */
+  private checkRepeat(
+    task: { dueDate?: string | null; parentId?: string | null; repeat?: RepeatRule | null },
+    fields: TaskFields,
+  ) {
+    if (!task.repeat) return;
+    if (task.parentId) throw validationError("A subtask cannot repeat; make its task repeat.");
+    if (!task.dueDate) throw validationError("A repeating task needs a due date.");
+    const { anchorDay: _old, ...rule } = task.repeat;
+    fields.repeat =
+      rule.frequency === "monthly" || rule.frequency === "yearly"
+        ? { ...rule, anchorDay: Number(task.dueDate.slice(8, 10)) }
+        : rule;
+  }
+
+  /**
+   * The next copy of a repeating task just completed: the same details, due
+   * on the rule's next date (today or later), its reminder moved by as many
+   * days, and its subtasks again, not done.
+   */
+  private async addNext(userId: string, task: TaskRow): Promise<void> {
+    const dueDate = nextDueDate(task.repeat!, task.dueDate!, await this.profiles.today(userId));
+    const shift = daysBetween(task.dueDate!, dueDate);
+    const remindAt = task.remindAt
+      ? `${addDays(task.remindAt.slice(0, 10), shift)}${task.remindAt.slice(10)}`
+      : null;
+    const nextId = await this.tasks.create(
+      userId,
+      {
+        title: task.title,
+        notes: task.notes,
+        priority: task.priority,
+        dueDate,
+        dueTime: task.dueTime,
+        remindAt,
+        repeat: task.repeat,
+        workspaceId: task.workspaceId,
+        projectId: task.projectId,
+        categoryId: task.categoryId,
+      },
+      task.tagIds,
+    );
+    for (const child of await this.tasks.findChildren(task.id, userId)) {
+      await this.tasks.create(
+        userId,
+        { title: child.title, notes: child.notes, priority: child.priority, parentId: nextId },
+        child.tagIds,
+      );
+    }
+    await this.tasks.update(task.id, userId, { nextId });
+  }
 
   /** Columns from the request; `completedAt` follows the status. */
   private fields(

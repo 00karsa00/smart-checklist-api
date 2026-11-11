@@ -1,3 +1,4 @@
+import { RepeatRule } from "../task.repeat";
 import { DueFilter, TaskPriority, TaskStatus } from "../types/task.type";
 
 export type CreateTaskDto = {
@@ -8,6 +9,8 @@ export type CreateTaskDto = {
   dueDate?: string | null;
   dueTime?: string | null;
   remindAt?: string | null;
+  /** anchorDay is set by the API from the due date. */
+  repeat?: Omit<RepeatRule, "anchorDay"> | null;
   /** A project, or a workspace; neither: the user's first workspace. */
   projectId?: string | null;
   workspaceId?: string;

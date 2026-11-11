@@ -21,6 +21,11 @@ export function timeIn(timeZone: string, now = new Date()): string {
   }).format(now);
 }
 
+/** Day of the week of a "YYYY-MM-DD" date: 0 = Sunday … 6 = Saturday. */
+export function weekdayOf(date: string): number {
+  return toDate(date).getUTCDay();
+}
+
 export function addDays(date: string, days: number): string {
   const next = toDate(date);
   next.setUTCDate(next.getUTCDate() + days);

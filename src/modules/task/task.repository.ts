@@ -11,6 +11,7 @@ import {
   withTransaction,
 } from "../../infrastructure/database";
 
+import { RepeatRule } from "./task.repeat";
 import { TaskStatus } from "./types/task.type";
 
 /** A task as stored, before it is shaped for the API. */
@@ -23,6 +24,8 @@ export type TaskRow = {
   dueDate: string | null;
   dueTime: string | null;
   remindAt: string | null;
+  repeat: RepeatRule | null;
+  nextId: string | null;
   workspaceId: string | null;
   projectId: string | null;
   parentId: string | null;
@@ -59,6 +62,8 @@ function toRow(row: TaskModel, tagIds: string[]): TaskRow {
     dueDate: row.dueDate,
     dueTime: row.dueTime,
     remindAt: row.remindAt,
+    repeat: row.repeat as RepeatRule | null,
+    nextId: row.nextId,
     workspaceId: row.workspaceId,
     projectId: row.projectId,
     parentId: row.parentId,

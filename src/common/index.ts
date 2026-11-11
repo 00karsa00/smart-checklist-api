@@ -58,7 +58,15 @@ export {
 
 // Utilities
 export { assignDefined } from "./utils/assign-defined";
-export { addDays, addMonths, daysBetween, financialMonth, timeIn, todayIn } from "./utils/dates";
+export {
+  addDays,
+  addMonths,
+  daysBetween,
+  financialMonth,
+  timeIn,
+  todayIn,
+  weekdayOf,
+} from "./utils/dates";
 export type { DatePeriod } from "./utils/dates";
 export { parseCsv, parseCsvLines, toCsv } from "./utils/csv";
 export { currencyDigits, minorToPlain, toMinorUnits } from "./utils/money";
