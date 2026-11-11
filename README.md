@@ -56,7 +56,7 @@ Run `npm run check` before every commit.
 
 ### API tests
 
-`src/test-e2e/*.e2e.ts` test the API from the outside: each file starts the real app on a free port against the database in `.env` (no running server needed), signs up its own users and admins (names starting with `e2e-`) and removes them when it ends. They cover sign-in and sessions (refresh rotation, a just-replaced token reused within the grace period, a stolen one used after it, the per-account sign-in limit), disabled accounts, sign-up switched off, managing admins and users (roles, self-protection, password resets, login logs), profile, settings, password changes and signed-in devices, workspaces and projects (starter set, unique names, ordering, filters, moving, archiving, the rules for deleting, one user never reaching another's), notifications (sources, read state, muting), and the admin overview and audit log. They are not part of `npm run check`, which needs no database; run `npm run test:e2e` after changing behaviour and before a release. If a run is stopped half-way, `npm run test:cleanup` removes what it left.
+`src/test-e2e/*.e2e.ts` test the API from the outside: each file starts the real app on a free port against the database in `.env` (no running server needed), signs up its own users and admins (names starting with `e2e-`) and removes them when it ends. They cover sign-in and sessions (refresh rotation, a just-replaced token reused within the grace period, a stolen one used after it, the per-account sign-in limit), disabled accounts, sign-up switched off, managing admins and users (roles, self-protection, password resets, login logs), profile, settings, password changes and signed-in devices, workspaces and projects (starter set, unique names, ordering, filters, moving, archiving, the rules for deleting, one user never reaching another's), categories and tags (both kinds, the suggested set), notifications (sources, read state, muting), and the admin overview and audit log. They are not part of `npm run check`, which needs no database; run `npm run test:e2e` after changing behaviour and before a release. If a run is stopped half-way, `npm run test:cleanup` removes what it left.
 
 ## Project structure
 
@@ -393,6 +393,19 @@ User only. A workspace is an area of life or work (a new user starts with **Pers
 | GET    | `/api/projects/:id`                                       |                                                                                                                                                       |
 | PATCH  | `/api/projects/:id`                                       | Any field above (a new `workspaceId` moves it), and `isArchived`.                                                                                     |
 | DELETE | `/api/projects/:id`                                       |                                                                                                                                                       |
+
+## Categories & tags API
+
+User only. Both are named, coloured labels a user keeps: a task has one **category** (Health, Home…) and any number of **tags** (urgent, waiting…). They share one table (`label`, with `kind`) and one implementation (`src/modules/label`: `LabelService` holds the rules, `label.kinds.ts` the words, error codes and suggested set of each kind). Names are unique per user and kind, so a category and a tag may share a name. Other modules check a label with `categoryService.canUse` / `tagService.canUse` before attaching it.
+
+| Method                      | Path                                   | Notes                                                                                                    |
+| --------------------------- | -------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| GET                         | `/api/categories?includeArchived=true` | By name. Archived ones are left out unless asked for.                                                    |
+| POST                        | `/api/categories`                      | `{ name, color? }` (`#RRGGBB`). 409 `CATEGORY_NAME_TAKEN`.                                               |
+| POST                        | `/api/categories/suggested`            | Adds Home, Health, Finance, Learning, Errands and Family, skipping names the user has; returns the list. |
+| PATCH                       | `/api/categories/:id`                  | `name`, `color` (`null` or `""` clears), `isArchived` (hidden from pickers).                             |
+| DELETE                      | `/api/categories/:id`                  |                                                                                                          |
+| GET / POST / PATCH / DELETE | `/api/tags…`                           | The same, with `TAG_NAME_TAKEN` / `TAG_NOT_FOUND`; no suggested set.                                     |
 
 ## Notifications API
 

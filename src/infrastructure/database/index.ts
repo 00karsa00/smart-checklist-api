@@ -24,6 +24,7 @@ export { AppUserPasswordModel } from "./models/app-user-password.model";
 export { AppUserModel } from "./models/app-user.model";
 export { NotificationModel, NotificationSettingModel } from "./models/notification.model";
 export { ProjectModel, WorkspaceModel } from "./models/workspace.model";
+export { LabelModel } from "./models/label.model";
 export type {
   LoginLogTable,
   PasswordTable,
