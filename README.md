@@ -56,7 +56,7 @@ Run `npm run check` before every commit.
 
 ### API tests
 
-`src/test-e2e/*.e2e.ts` test the API from the outside: each file starts the real app on a free port against the database in `.env` (no running server needed), signs up its own users and admins (names starting with `e2e-`) and removes them when it ends. They cover sign-in and sessions (refresh rotation, a just-replaced token reused within the grace period, a stolen one used after it, the per-account sign-in limit), disabled accounts, sign-up switched off, managing admins and users (roles, self-protection, password resets, login logs), profile, settings, password changes and signed-in devices, workspaces and projects (starter set, unique names, ordering, filters, moving, archiving, the rules for deleting, one user never reaching another's), categories and tags (both kinds, the suggested set), tasks (placement, subtasks, ordering, every filter, completing, moving, what deleting a project, category, tag or workspace does), task reminders and due-date alerts (once each, muting, a moved reminder), notifications (sources, read state, muting), and the admin overview and audit log. They are not part of `npm run check`, which needs no database; run `npm run test:e2e` after changing behaviour and before a release. If a run is stopped half-way, `npm run test:cleanup` removes what it left.
+`src/test-e2e/*.e2e.ts` test the API from the outside: each file starts the real app on a free port against the database in `.env` (no running server needed), signs up its own users and admins (names starting with `e2e-`) and removes them when it ends. They cover sign-in and sessions (refresh rotation, a just-replaced token reused within the grace period, a stolen one used after it, the per-account sign-in limit), disabled accounts, sign-up switched off, managing admins and users (roles, self-protection, password resets, login logs), profile, settings, password changes and signed-in devices, workspaces and projects (starter set, unique names, ordering, filters, moving, archiving, the rules for deleting, one user never reaching another's), categories and tags (both kinds, the suggested set), tasks (placement, subtasks, ordering, every filter, completing, moving, what deleting a project, category, tag or workspace does), task reminders and due-date alerts (once each, muting, a moved reminder), the dashboard (each list, the counts, project progress, completions per day), notifications (sources, read state, muting), and the admin overview and audit log. They are not part of `npm run check`, which needs no database; run `npm run test:e2e` after changing behaviour and before a release. If a run is stopped half-way, `npm run test:cleanup` removes what it left.
 
 ## Project structure
 
@@ -422,6 +422,18 @@ What happens elsewhere is handled by the database: deleting a project deletes it
 | DELETE | `/api/tasks/:id`                                                                                      | Its subtasks go too.                                                                                                                                                                                                                                                                                                 |
 
 `status` is `todo`, `in_progress` or `done` (`completedAt` is set when it becomes done, cleared when reopened). `priority` is `none`, `low`, `medium` or `high` (stored as 0–3, so lists sort by it). `dueTime` is `HH:MM` in the user's time zone and needs a `dueDate`. `remindAt` is a local date and time (`YYYY-MM-DDTHH:MM`, as a datetime-local input sends it) for a reminder, or `null`. Each task has `overdue` (past its due date, or today past its due time, and not done) and `subtasks: { done, total }`.
+
+## Dashboard API
+
+User only. `GET /api/dashboard` is the Today page in one call, put together from the task and workspace services (`src/modules/dashboard`):
+
+| Field                             | What                                                                                                                                                    |
+| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `today`                           | The date in the user's time zone.                                                                                                                       |
+| `counts`                          | `overdue`, `dueToday`, `upcoming` (the next 7 days), `noDate` (open tasks without a due date), `completedToday`, `completedThisWeek` (the last 7 days). |
+| `overdue`, `dueToday`, `upcoming` | Open top-level tasks, as `GET /api/tasks` gives them: at most 10, 50 and 10.                                                                            |
+| `projects`                        | Up to 6 active projects, soonest due first, each with `progress: { done, total }` (its top-level tasks).                                                |
+| `completedByDay`                  | `{ date, count }` for each of the last 7 days, oldest first, today last.                                                                                |
 
 ## Notifications API
 

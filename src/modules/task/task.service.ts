@@ -1,4 +1,5 @@
 import {
+  addDays,
   AppError,
   buildPaginatedData,
   ERROR_CODES,
@@ -13,7 +14,7 @@ import { workspaceService, WorkspaceService } from "../workspace/workspace.servi
 import { CreateTaskDto, UpdateTaskDto } from "./dto/task.dto";
 import { TaskFields, TaskFilter, taskRepository, TaskRepository, TaskRow } from "./task.repository";
 import { dueRange, isOverdue, priorityFromNumber, priorityToNumber } from "./task.rules";
-import { DueFilter, Task, TaskDetail, TaskList, TaskStatus } from "./types/task.type";
+import { DayCount, DueFilter, Task, TaskDetail, TaskList, TaskStatus } from "./types/task.type";
 
 export type TaskListOptions = Omit<TaskFilter, "placement" | "due"> & {
   workspaceId?: string;
@@ -107,6 +108,22 @@ export class TaskService {
     await this.canUse(userId, id);
     await this.tasks.delete(id, userId);
     return null;
+  }
+
+  /** Tasks completed on each of the last `days` days (oldest first), in the user's time zone. */
+  async completedPerDay(userId: string, days: number): Promise<DayCount[]> {
+    const [{ timeZone }, today] = await Promise.all([
+      this.profiles.getSettings(userId),
+      this.profiles.today(userId),
+    ]);
+    const dates = Array.from({ length: days }, (_, index) => addDays(today, index - days + 1));
+    const counts = await this.tasks.completedPerDay(userId, timeZone, dates[0]);
+    return dates.map((date) => ({ date, count: counts.get(date) ?? 0 }));
+  }
+
+  /** Top-level tasks done and in all, per project id. */
+  progressByProject(userId: string): Promise<Map<string, { done: number; total: number }>> {
+    return this.tasks.progressByProject(userId);
   }
 
   /** The task, when the user may use it; 404 otherwise. Other modules call this. */

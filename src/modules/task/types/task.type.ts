@@ -46,3 +46,6 @@ export type Task = {
 export type TaskDetail = Task & { children: Task[] };
 
 export type TaskList = PaginatedData<Task>;
+
+/** How many on one day, e.g. tasks completed. */
+export type DayCount = { /** YYYY-MM-DD */ date: string; count: number };

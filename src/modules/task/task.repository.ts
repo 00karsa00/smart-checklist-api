@@ -1,4 +1,5 @@
 import {
+  selectRows,
   between,
   containsText,
   notEqual,
@@ -78,6 +79,20 @@ const ORDER: [string, string][] = [
   ["createdAt", "ASC"],
 ];
 
+const COMPLETED_PER_DAY_SQL = `
+  SELECT to_char(completed_at AT TIME ZONE :timeZone, 'YYYY-MM-DD') AS day, COUNT(*) AS count
+    FROM task
+   WHERE app_user_id = :userId
+     AND completed_at IS NOT NULL
+     AND (completed_at AT TIME ZONE :timeZone)::date >= :since::date
+   GROUP BY 1`;
+
+const PROGRESS_BY_PROJECT_SQL = `
+  SELECT project_id, COUNT(*) FILTER (WHERE status = 'done') AS done, COUNT(*) AS total
+    FROM task
+   WHERE app_user_id = :userId AND project_id IS NOT NULL AND parent_id IS NULL
+   GROUP BY project_id`;
+
 /** Tasks, their subtasks and tags, always scoped by `userId`. */
 export class TaskRepository {
   /** One page of top-level tasks. */
@@ -123,6 +138,31 @@ export class TaskRepository {
       { remindAt: between(undefined, now) },
     ]);
     return this.withTags(await TaskModel.findAll({ where }));
+  }
+
+  /** Tasks and subtasks completed per local day (in `timeZone`) from `since` on. */
+  async completedPerDay(
+    userId: string,
+    timeZone: string,
+    since: string,
+  ): Promise<Map<string, number>> {
+    const rows = await selectRows<{ day: string; count: string }>(COMPLETED_PER_DAY_SQL, {
+      userId,
+      timeZone,
+      since,
+    });
+    return new Map(rows.map((row) => [row.day, Number(row.count)]));
+  }
+
+  /** Top-level tasks done and in all, per project. */
+  async progressByProject(userId: string): Promise<Map<string, { done: number; total: number }>> {
+    const rows = await selectRows<{ project_id: string; done: string; total: string }>(
+      PROGRESS_BY_PROJECT_SQL,
+      { userId },
+    );
+    return new Map(
+      rows.map((row) => [row.project_id, { done: Number(row.done), total: Number(row.total) }]),
+    );
   }
 
   async findById(id: string, userId: string): Promise<TaskRow | null> {
