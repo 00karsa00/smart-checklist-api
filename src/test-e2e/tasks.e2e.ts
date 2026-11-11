@@ -98,6 +98,7 @@ describe("tasks", () => {
       "Later",
     ]);
     expect(titles(await send("GET", "/tasks?q=HIGH"))).toEqual(["Today high"]);
+    expect(titles(await send("GET", "/tasks?q=%20high%20"))).toEqual(["Today high"]);
     const page = await send("GET", "/tasks?limit=2&page=2");
     expect([titles(page), page.pagination.total]).toEqual([["Today low", "Later"], 5]);
   });

@@ -56,7 +56,7 @@ Run `npm run check` before every commit.
 
 ### API tests
 
-`src/test-e2e/*.e2e.ts` test the API from the outside: each file starts the real app on a free port against the database in `.env` (no running server needed), signs up its own users and admins (names starting with `e2e-`) and removes them when it ends. They cover sign-in and sessions (refresh rotation, a just-replaced token reused within the grace period, a stolen one used after it, the per-account sign-in limit), disabled accounts, sign-up switched off, managing admins and users (roles, self-protection, password resets, login logs), profile, settings, password changes and signed-in devices, workspaces and projects (starter set, unique names, ordering, filters, moving, archiving, the rules for deleting, one user never reaching another's), categories and tags (both kinds, the suggested set), tasks (placement, subtasks, ordering, every filter including a date range, completing, moving, what deleting a project, category, tag or workspace does), repeating tasks (the next copy and its details, once only, finishing late, monthly days, weekdays, stopping), task reminders and due-date alerts (once each, muting, a moved reminder), the dashboard (each list, the counts, project progress, completions per day), notifications (sources, read state, muting), and the admin overview and audit log. They are not part of `npm run check`, which needs no database; run `npm run test:e2e` after changing behaviour and before a release. If a run is stopped half-way, `npm run test:cleanup` removes what it left.
+`src/test-e2e/*.e2e.ts` test the API from the outside: each file starts the real app on a free port against the database in `.env` (no running server needed), signs up its own users and admins (names starting with `e2e-`) and removes them when it ends. They cover sign-in and sessions (refresh rotation, a just-replaced token reused within the grace period, a stolen one used after it, the per-account sign-in limit), disabled accounts, sign-up switched off, managing admins and users (roles, self-protection, password resets, login logs), profile, settings, password changes and signed-in devices, workspaces and projects (starter set, unique names, ordering, filters, moving, archiving, the rules for deleting, one user never reaching another's), categories and tags (both kinds, the suggested set), tasks (placement, subtasks, ordering, every filter including a date range, completing, moving, what deleting a project, category, tag or workspace does), repeating tasks (the next copy and its details, once only, finishing late, monthly days, weekdays, stopping), task reminders and due-date alerts (once each, muting, a moved reminder), the dashboard (each list, the counts, project progress, completions per day), search (every kind, ranking, only the user's own records), notifications (sources, read state, muting), and the admin overview and audit log. They are not part of `npm run check`, which needs no database; run `npm run test:e2e` after changing behaviour and before a release. If a run is stopped half-way, `npm run test:cleanup` removes what it left.
 
 ## Project structure
 
@@ -436,6 +436,19 @@ User only. `GET /api/dashboard` is the Today page in one call, put together from
 | `overdue`, `dueToday`, `upcoming` | Open top-level tasks, as `GET /api/tasks` gives them: at most 10, 50 and 10.                                                                            |
 | `projects`                        | Up to 6 active projects, soonest due first, each with `progress: { done, total }` (its top-level tasks).                                                |
 | `completedByDay`                  | `{ date, count }` for each of the last 7 days, oldest first, today last.                                                                                |
+
+## Search API
+
+User only. `GET /api/search?q=` (2–100 characters) searches every registered **source** and returns `{ query, groups: [{ kind, hits }] }`, one group per kind with results, at most 8 hits each. A hit is `{ kind, id, title, data }`, where `data` holds what the app needs to show and link it (a task's `status`, `dueDate`, `projectId`, `workspaceId`; a label's `color`…).
+
+| Kind              | Searches                                         | Registered in                               |
+| ----------------- | ------------------------------------------------ | ------------------------------------------- |
+| `task`            | Title and notes, done ones too (after open ones) | `src/modules/task/task.search.ts`           |
+| `project`         | Name and description, archived too               | `src/modules/workspace/workspace.search.ts` |
+| `workspace`       | Name                                             | `src/modules/workspace/workspace.search.ts` |
+| `category`, `tag` | Name, archived too                               | `src/modules/label/label.search.ts`         |
+
+Within a kind, the whole name comes first, then names starting with the words, then a word in the name starting with them, then the rest, then matches in other text (`matchRank` and `searchInList` in `search.sources.ts`). A new module adds its records with `registerSearchSource({ kind, search })`; the search module never imports it.
 
 ## Notifications API
 

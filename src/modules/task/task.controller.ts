@@ -8,7 +8,8 @@ export function getTasks(ctx: HttpContext<NoParams, TaskListQuery>) {
   const { page, limit, includeDone, q, ...filter } = ctx.query;
   return taskService.list(
     currentUserId(ctx),
-    { ...filter, search: q, includeDone: includeDone === "true" },
+    // The query is read-only, so `q` is trimmed here.
+    { ...filter, search: q?.trim() || undefined, includeDone: includeDone === "true" },
     parsePageQuery({ page, limit }, 50),
   );
 }

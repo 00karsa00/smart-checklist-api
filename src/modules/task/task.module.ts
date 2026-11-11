@@ -3,6 +3,8 @@ import { ApiModule } from "../../infrastructure/http";
 import { userOnly } from "../user/user.module";
 // Registers the reminder and due-date notification sources.
 import "./task.reminders";
+// Registers tasks with search.
+import "./task.search";
 import { createTask, deleteTask, getTask, getTasks, updateTask } from "./task.controller";
 import {
   validateCreateTask,

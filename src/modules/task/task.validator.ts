@@ -209,7 +209,6 @@ export const validateTaskListQuery: Guard = (ctx) => {
   if (query.from && query.to && (query.from as string) > (query.to as string)) {
     throw validationError("Query param 'from' must not be after 'to'.");
   }
-  if (typeof query.q === "string") query.q = query.q.trim() || undefined;
   assertOptional(
     query,
     "q",

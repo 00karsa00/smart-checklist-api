@@ -1,6 +1,8 @@
 import { ApiModule } from "../../infrastructure/http";
 
 import { userOnly } from "../user/user.module";
+// Registers projects and workspaces with search.
+import "./workspace.search";
 import {
   createProject,
   createWorkspace,

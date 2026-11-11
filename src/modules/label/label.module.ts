@@ -2,6 +2,8 @@ import { currentUserId, idParamGuard } from "../../common";
 import { ApiModule, HttpContext, IdParams, NoParams } from "../../infrastructure/http";
 
 import { userOnly } from "../user/user.module";
+// Registers categories and tags with search.
+import "./label.search";
 import { CreateLabelDto, LabelListQuery, UpdateLabelDto } from "./dto/label.dto";
 import { categoryService, LabelService, tagService } from "./label.service";
 import {
