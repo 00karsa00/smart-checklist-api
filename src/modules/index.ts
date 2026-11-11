@@ -8,6 +8,7 @@ import { profileModule } from "./profile/profile.module";
 import { userModule } from "./user/user.module";
 import { notificationModule } from "./notification/notification.module";
 import { systemModule } from "./system/system.module";
+import { projectModule, workspaceModule } from "./workspace/workspace.module";
 
 // Every feature the API serves. A new feature is one new line here.
 export const modules: ApiModule[] = [
@@ -18,5 +19,7 @@ export const modules: ApiModule[] = [
   userModule,
   notificationModule,
   systemModule,
+  workspaceModule,
+  projectModule,
   itemModule,
 ];

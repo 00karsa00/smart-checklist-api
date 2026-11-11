@@ -56,7 +56,7 @@ Run `npm run check` before every commit.
 
 ### API tests
 
-`src/test-e2e/*.e2e.ts` test the API from the outside: each file starts the real app on a free port against the database in `.env` (no running server needed), signs up its own users and admins (names starting with `e2e-`) and removes them when it ends. They cover sign-in and sessions (refresh rotation, a just-replaced token reused within the grace period, a stolen one used after it, the per-account sign-in limit), disabled accounts, sign-up switched off, managing admins and users (roles, self-protection, password resets, login logs), profile, settings, password changes and signed-in devices, notifications (sources, read state, muting), and the admin overview and audit log. They are not part of `npm run check`, which needs no database; run `npm run test:e2e` after changing behaviour and before a release. If a run is stopped half-way, `npm run test:cleanup` removes what it left.
+`src/test-e2e/*.e2e.ts` test the API from the outside: each file starts the real app on a free port against the database in `.env` (no running server needed), signs up its own users and admins (names starting with `e2e-`) and removes them when it ends. They cover sign-in and sessions (refresh rotation, a just-replaced token reused within the grace period, a stolen one used after it, the per-account sign-in limit), disabled accounts, sign-up switched off, managing admins and users (roles, self-protection, password resets, login logs), profile, settings, password changes and signed-in devices, workspaces and projects (starter set, unique names, ordering, filters, moving, archiving, the rules for deleting, one user never reaching another's), notifications (sources, read state, muting), and the admin overview and audit log. They are not part of `npm run check`, which needs no database; run `npm run test:e2e` after changing behaviour and before a release. If a run is stopped half-way, `npm run test:cleanup` removes what it left.
 
 ## Project structure
 
@@ -377,6 +377,22 @@ Login log filters: `search`, `accountId`, `status` (`success`/`failed`),
 `from` and `to` (YYYY-MM-DD). `app_user` holds basic details only; other user
 details go in their own tables keyed by `app_user.id`. A user needs an email
 or a phone; changing one clears its verified flag unless the flag is sent too.
+
+## Workspaces & projects API
+
+User only. A workspace is an area of life or work (a new user starts with **Personal** and **Work**); projects live in one workspace. Names are unique per user (workspaces) and per workspace (projects). Every request checks the user may use the workspace or project through `workspaceService.canUseWorkspace` / `canUseProject`; other modules (tasks) call these too, so sharing later changes only them.
+
+| Method | Path                                                      | Notes                                                                                                                                                 |
+| ------ | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/workspaces`                                         | Oldest first, each with `openProjects` (not archived or completed).                                                                                   |
+| POST   | `/api/workspaces`                                         | `{ name, color? }` (`#RRGGBB`). 409 `WORKSPACE_NAME_TAKEN`.                                                                                           |
+| PATCH  | `/api/workspaces/:id`                                     | `name`, `color` (`null` clears).                                                                                                                      |
+| DELETE | `/api/workspaces/:id`                                     | 409 `WORKSPACE_HAS_PROJECTS` while it has projects; 409 `WORKSPACE_LAST` for the only one.                                                            |
+| GET    | `/api/projects?workspaceId=&status=&includeArchived=true` | Archived last; then active, on hold, completed; then the nearest due date; then name. Each has `overdue`.                                             |
+| POST   | `/api/projects`                                           | `{ workspaceId, name, description?, color?, status?, dueDate? }`; `status` is `active` (default), `on_hold` or `completed`. 409 `PROJECT_NAME_TAKEN`. |
+| GET    | `/api/projects/:id`                                       |                                                                                                                                                       |
+| PATCH  | `/api/projects/:id`                                       | Any field above (a new `workspaceId` moves it), and `isArchived`.                                                                                     |
+| DELETE | `/api/projects/:id`                                       |                                                                                                                                                       |
 
 ## Notifications API
 

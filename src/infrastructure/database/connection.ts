@@ -13,6 +13,7 @@ import { AppUserPasswordModel } from "./models/app-user-password.model";
 import { AppUserModel } from "./models/app-user.model";
 import { NotificationModel, NotificationSettingModel } from "./models/notification.model";
 import { AdminAuditLogModel } from "./models/admin-audit-log.model";
+import { ProjectModel, WorkspaceModel } from "./models/workspace.model";
 
 // Register every model here when you create a table, e.g.
 //   import { Item } from "./models/item.model";
@@ -30,6 +31,8 @@ const MODELS: ModelCtor[] = [
   NotificationModel,
   NotificationSettingModel,
   AdminAuditLogModel,
+  WorkspaceModel,
+  ProjectModel,
 ];
 
 const sequelize = new Sequelize(

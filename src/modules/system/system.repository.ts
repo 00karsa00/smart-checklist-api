@@ -9,6 +9,8 @@ import { MonthCount, SystemOverview, UsageCount } from "./types/system.type";
  * A new feature adds one line here. Table names are fixed strings, never input.
  */
 export const USAGE_TABLES: Readonly<Record<string, string>> = {
+  workspaces: "workspace",
+  projects: "project",
   notifications: "notification",
 };
 
