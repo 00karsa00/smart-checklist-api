@@ -102,6 +102,31 @@ describe("tasks", () => {
     expect([titles(page), page.pagination.total]).toEqual([["Today low", "Later"], 5]);
   });
 
+  it("lists a date range for a calendar, done ones included when asked", async () => {
+    const { token, send } = await setUp();
+    const add = (title: string, offset: number, status = "todo") =>
+      send("POST", "/tasks", { title, dueDate: addDays(today, offset), status });
+    await add("Before", -10);
+    await add("Start", 0);
+    await add("Middle", 3, "done");
+    await add("End", 6);
+    await add("After", 7);
+    const range = `from=${today}&to=${addDays(today, 6)}`;
+    expect(titles(await send("GET", `/tasks?${range}`))).toEqual(["Start", "End"]);
+    expect(titles(await send("GET", `/tasks?${range}&includeDone=true`))).toEqual([
+      "Start",
+      "End",
+      "Middle",
+    ]);
+    for (const query of [
+      `from=${today}&due=today`,
+      `from=${today}&to=${addDays(today, -1)}`,
+      "from=soon",
+    ]) {
+      expect((await api.call("GET", `/tasks?${query}`, undefined, token)).status).toBe(400);
+    }
+  });
+
   it("completes and reopens; edits move it between projects and workspaces", async () => {
     const { send, personal, work, project } = await setUp();
     const task = await send("POST", "/tasks", { title: "Call bank", projectId: project.id });

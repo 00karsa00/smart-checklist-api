@@ -21,6 +21,9 @@ import { DayCount, DueFilter, Task, TaskDetail, TaskList, TaskStatus } from "./t
 export type TaskListOptions = Omit<TaskFilter, "placement" | "due"> & {
   workspaceId?: string;
   due?: DueFilter;
+  /** Due dates in this range, e.g. the days a calendar shows. */
+  from?: string;
+  to?: string;
 };
 
 type Now = { date: string; time: string };
@@ -41,7 +44,7 @@ export class TaskService {
   ) {}
 
   async list(userId: string, options: TaskListOptions, page: PageRequest): Promise<TaskList> {
-    const { workspaceId, due, ...rest } = options;
+    const { workspaceId, due, from, to, ...rest } = options;
     const now = await this.profiles.now(userId);
     const filter: TaskFilter = { ...rest };
     if (workspaceId) {
@@ -53,6 +56,7 @@ export class TaskService {
       filter.placement = { workspaceId, projectIds: projects.map((project) => project.id) };
     }
     if (due) filter.due = dueRange(due, now.date);
+    else if (from || to) filter.due = { from, to };
     const { rows, count } = await this.tasks.findPage(userId, filter, pageOffset(page), page.limit);
     return buildPaginatedData(await this.shape(userId, rows, now), { ...page, total: count });
   }

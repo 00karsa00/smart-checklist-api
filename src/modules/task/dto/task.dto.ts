@@ -31,6 +31,10 @@ export type TaskListQuery = {
   tagId?: string;
   status?: TaskStatus;
   due?: DueFilter;
+  /** Due on or after this date (YYYY-MM-DD); with `to`, a calendar range. */
+  from?: string;
+  /** Due on or before this date. */
+  to?: string;
   /** Words in the title or notes. */
   q?: string;
   /** "true" to include done tasks. */

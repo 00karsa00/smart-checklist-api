@@ -177,6 +177,8 @@ export const validateTaskListQuery: Guard = (ctx) => {
       "tagId",
       "status",
       "due",
+      "from",
+      "to",
       "q",
       "includeDone",
     ],
@@ -198,6 +200,15 @@ export const validateTaskListQuery: Guard = (ctx) => {
     (value) => isOneOf(value, DUE_FILTERS),
     `Query param 'due' must be one of: ${DUE_FILTERS.join(", ")}.`,
   );
+  for (const field of ["from", "to"]) {
+    assertOptional(query, field, isDate, `Query param '${field}' must be a date (YYYY-MM-DD).`);
+  }
+  if (query.due && (query.from || query.to)) {
+    throw validationError("Use either 'due' or 'from' / 'to', not both.");
+  }
+  if (query.from && query.to && (query.from as string) > (query.to as string)) {
+    throw validationError("Query param 'from' must not be after 'to'.");
+  }
   if (typeof query.q === "string") query.q = query.q.trim() || undefined;
   assertOptional(
     query,
