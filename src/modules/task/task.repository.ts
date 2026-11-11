@@ -21,6 +21,7 @@ export type TaskRow = {
   priority: number;
   dueDate: string | null;
   dueTime: string | null;
+  remindAt: string | null;
   workspaceId: string | null;
   projectId: string | null;
   parentId: string | null;
@@ -56,6 +57,7 @@ function toRow(row: TaskModel, tagIds: string[]): TaskRow {
     priority: row.priority,
     dueDate: row.dueDate,
     dueTime: row.dueTime,
+    remindAt: row.remindAt,
     workspaceId: row.workspaceId,
     projectId: row.projectId,
     parentId: row.parentId,
@@ -108,6 +110,19 @@ export class TaskRepository {
     }
     const { rows, count } = await TaskModel.findAndCountAll({ where, order: ORDER, offset, limit });
     return { rows: await this.withTags(rows), count };
+  }
+
+  /**
+   * Open tasks (subtasks too) due by `today`, or with a reminder at or before
+   * `now` ("YYYY-MM-DDTHH:MM"): what reminders and due-date alerts look at.
+   */
+  async findNeedingAttention(userId: string, today: string, now: string): Promise<TaskRow[]> {
+    const where: Where = { userId, status: notEqual("done") };
+    requireAny(where, [
+      { dueDate: between(undefined, today) },
+      { remindAt: between(undefined, now) },
+    ]);
+    return this.withTags(await TaskModel.findAll({ where }));
   }
 
   async findById(id: string, userId: string): Promise<TaskRow | null> {

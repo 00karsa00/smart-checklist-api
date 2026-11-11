@@ -214,6 +214,8 @@ describe("tasks", () => {
       { title: "X", projectId: project.id, workspaceId: work.id },
       { title: "X", tagIds: "urgent" },
       { title: "X", completedAt: today },
+      { title: "X", remindAt: "tomorrow 9am" },
+      { title: "X", remindAt: `${today} 09:00` },
     ]) {
       expect((await api.call("POST", "/tasks", body, token)).status).toBe(400);
     }

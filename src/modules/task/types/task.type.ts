@@ -24,6 +24,8 @@ export type Task = {
   dueDate: string | null;
   /** HH:MM in the user's time zone, or null. */
   dueTime: string | null;
+  /** When to remind: "YYYY-MM-DDTHH:MM" in the user's time zone, or null. */
+  remindAt: string | null;
   /** Where it sits: a project (and that project's workspace), or a workspace alone. */
   workspaceId: string;
   projectId: string | null;

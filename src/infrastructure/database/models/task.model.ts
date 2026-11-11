@@ -27,6 +27,7 @@ type TaskAttributes = {
   priority: number;
   dueDate: string | null;
   dueTime: string | null;
+  remindAt: string | null;
   completedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
@@ -43,6 +44,7 @@ type TaskOptional =
   | "priority"
   | "dueDate"
   | "dueTime"
+  | "remindAt"
   | "completedAt"
   | "createdAt"
   | "updatedAt";
@@ -97,6 +99,10 @@ export class TaskModel extends Model<TaskAttributes, Optional<TaskAttributes, Ta
 
   @Column(DataType.STRING(5))
   declare dueTime: string | null;
+
+  /** "YYYY-MM-DDTHH:MM", local to the user. */
+  @Column(DataType.STRING(16))
+  declare remindAt: string | null;
 
   @Column(DataType.DATE)
   declare completedAt: Date | null;

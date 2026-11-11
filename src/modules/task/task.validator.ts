@@ -24,6 +24,13 @@ export const validateTaskIdParam = idParamGuard("Task");
 
 const isTime = (value: unknown) =>
   typeof value === "string" && /^([01]\d|2[0-3]):[0-5]\d$/.test(value);
+/** "YYYY-MM-DDTHH:MM", as a datetime-local input sends it. */
+const isLocalDateTime = (value: unknown) =>
+  typeof value === "string" &&
+  value.length === 16 &&
+  value[10] === "T" &&
+  isDate(value.slice(0, 10)) &&
+  isTime(value.slice(11));
 const oneOf = (field: string, allowed: readonly string[]) =>
   [
     (value: unknown) => isOneOf(value, allowed),
@@ -36,7 +43,7 @@ function details(body: Body) {
   normaliseOptionalText(body, "notes", 5000);
   assertOptional(body, "status", ...oneOf("status", TASK_STATUSES));
   assertOptional(body, "priority", ...oneOf("priority", TASK_PRIORITIES));
-  for (const field of ["dueDate", "dueTime", "categoryId", "projectId"]) {
+  for (const field of ["dueDate", "dueTime", "remindAt", "categoryId", "projectId"]) {
     if (body[field] === "") body[field] = null;
   }
   assertOptional(
@@ -50,6 +57,12 @@ function details(body: Body) {
     "dueTime",
     orNull(isTime),
     "Field 'dueTime' must be a time (HH:MM) or null.",
+  );
+  assertOptional(
+    body,
+    "remindAt",
+    orNull(isLocalDateTime),
+    "Field 'remindAt' must be a local date and time (YYYY-MM-DDTHH:MM) or null.",
   );
   assertOptional(
     body,
@@ -86,6 +99,7 @@ const FIELDS = [
   "priority",
   "dueDate",
   "dueTime",
+  "remindAt",
   "projectId",
   "workspaceId",
   "categoryId",
