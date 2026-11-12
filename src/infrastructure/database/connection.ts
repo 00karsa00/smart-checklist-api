@@ -18,6 +18,7 @@ import { LabelModel } from "./models/label.model";
 import { TaskModel, TaskTagModel } from "./models/task.model";
 import { NoteItemModel, NoteModel } from "./models/note.model";
 import { GoalMilestoneModel, GoalModel, GoalProjectModel } from "./models/goal.model";
+import { HabitCheckModel, HabitModel } from "./models/habit.model";
 
 // Register every model here when you create a table, e.g.
 //   import { Item } from "./models/item.model";
@@ -45,6 +46,8 @@ const MODELS: ModelCtor[] = [
   GoalModel,
   GoalMilestoneModel,
   GoalProjectModel,
+  HabitModel,
+  HabitCheckModel,
 ];
 
 const sequelize = new Sequelize(

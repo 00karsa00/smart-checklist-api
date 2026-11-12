@@ -10,6 +10,7 @@ import {
   normaliseOptionalText,
   orNull,
   rejectUnknownFields,
+  updateGuard,
   validationError,
 } from "../../common";
 import { Guard } from "../../infrastructure/http";
@@ -71,15 +72,7 @@ export const validateCreateNote: Guard = (ctx) => {
   ctx.body = body;
 };
 
-export const validateUpdateNote: Guard = (ctx) => {
-  const body = (ctx.body ?? {}) as Body;
-  const fields = [...FIELDS, "isArchived"];
-  rejectUnknownFields(body, fields, (field) => `Field '${field}' cannot be changed.`);
-  assertAtLeastOne(body, fields);
-  details(body);
-  assertOptional(body, "isArchived", isBoolean, "Field 'isArchived' must be true or false.");
-  ctx.body = body;
-};
+export const validateUpdateNote = updateGuard(FIELDS, details, { archivable: true });
 
 export const validateCreateNoteItem: Guard = (ctx) => {
   const body = (ctx.body ?? {}) as Body;

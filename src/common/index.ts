@@ -53,6 +53,7 @@ export {
   orNull,
   rejectFields,
   rejectUnknownFields,
+  updateGuard,
   validationError,
 } from "./validation/rules";
 

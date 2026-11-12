@@ -1,11 +1,9 @@
 import {
-  assertAtLeastOne,
-  assertOptional,
   assertOptionalBooleanQuery,
   assertOptionalColor,
   assertRequiredText,
-  isBoolean,
   rejectUnknownFields,
+  updateGuard,
 } from "../../common";
 import { Guard } from "../../infrastructure/http";
 
@@ -29,13 +27,11 @@ export const validateCreateLabel: Guard = (ctx) => {
   ctx.body = body;
 };
 
-export const validateUpdateLabel: Guard = (ctx) => {
-  const body = (ctx.body ?? {}) as Body;
-  const fields = ["name", "color", "isArchived"];
-  rejectUnknownFields(body, fields, (field) => `Field '${field}' cannot be changed.`);
-  assertAtLeastOne(body, fields);
-  if (body.name !== undefined) assertRequiredText(body, "name", 50);
-  assertOptionalColor(body);
-  assertOptional(body, "isArchived", isBoolean, "Field 'isArchived' must be true or false.");
-  ctx.body = body;
-};
+export const validateUpdateLabel = updateGuard(
+  ["name", "color"],
+  (body) => {
+    if (body.name !== undefined) assertRequiredText(body, "name", 50);
+    assertOptionalColor(body);
+  },
+  { archivable: true },
+);

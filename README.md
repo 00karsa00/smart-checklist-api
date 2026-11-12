@@ -56,7 +56,7 @@ Run `npm run check` before every commit.
 
 ### API tests
 
-`src/test-e2e/*.e2e.ts` test the API from the outside: each file starts the real app on a free port against the database in `.env` (no running server needed), signs up its own users and admins (names starting with `e2e-`) and removes them when it ends. They cover sign-in and sessions (refresh rotation, a just-replaced token reused within the grace period, a stolen one used after it, the per-account sign-in limit), disabled accounts, sign-up switched off, managing admins and users (roles, self-protection, password resets, login logs), profile, settings, password changes and signed-in devices, workspaces and projects (starter set, unique names, ordering, filters, moving, archiving, the rules for deleting, one user never reaching another's), categories and tags (both kinds, the suggested set), tasks (placement, subtasks, ordering, every filter including a date range, completing, moving, what deleting a project, category, tag or workspace does), repeating tasks (the next copy and its details, once only, finishing late, monthly days, weekdays, stopping), task reminders and due-date alerts (once each, muting, a moved reminder), the dashboard (each list, the counts, project progress, completions per day), search (every kind, ranking, only the user's own records), notes (checklists, ordering, filters, moving, what deleting a task, project or workspace does, search), goals (milestones, progress from linked projects' tasks, statuses, ordering, search), notifications (sources, read state, muting), and the admin overview and audit log. They are not part of `npm run check`, which needs no database; run `npm run test:e2e` after changing behaviour and before a release. If a run is stopped half-way, `npm run test:cleanup` removes what it left.
+`src/test-e2e/*.e2e.ts` test the API from the outside: each file starts the real app on a free port against the database in `.env` (no running server needed), signs up its own users and admins (names starting with `e2e-`) and removes them when it ends. They cover sign-in and sessions (refresh rotation, a just-replaced token reused within the grace period, a stolen one used after it, the per-account sign-in limit), disabled accounts, sign-up switched off, managing admins and users (roles, self-protection, password resets, login logs), profile, settings, password changes and signed-in devices, workspaces and projects (starter set, unique names, ordering, filters, moving, archiving, the rules for deleting, one user never reaching another's), categories and tags (both kinds, the suggested set), tasks (placement, subtasks, ordering, every filter including a date range, completing, moving, what deleting a project, category, tag or workspace does), repeating tasks (the next copy and its details, once only, finishing late, monthly days, weekdays, stopping), task reminders and due-date alerts (once each, muting, a moved reminder), the dashboard (each list, the counts, project progress, completions per day), search (every kind, ranking, only the user's own records), notes (checklists, ordering, filters, moving, what deleting a task, project or workspace does, search), goals (milestones, progress from linked projects' tasks, statuses, ordering, search), habits (schedules, ticking days, streaks, reminders, search), notifications (sources, read state, muting), and the admin overview and audit log. They are not part of `npm run check`, which needs no database; run `npm run test:e2e` after changing behaviour and before a release. If a run is stopped half-way, `npm run test:cleanup` removes what it left.
 
 ## Project structure
 
@@ -472,6 +472,24 @@ Each goal has `projectIds`, `milestones` and `tasks` (`{ done, total }`; tasks a
 | DELETE | `/api/goals/:id/milestones/:milestoneId` | Returns the goal.                                                                                                                                  |
 
 Goals are searched too (kind `goal`, by title and description).
+
+## Habits API
+
+User only. A habit (`title`, `description`, `color`, `reminderTime`, `startDate`) sits in a workspace (the first one when left out; a workspace with habits cannot be deleted) and has a `schedule`: `{ kind: "daily" }`, `{ kind: "weekdays", weekdays: [0–6, …] }` (0 = Sunday) or `{ kind: "weekly", timesPerWeek: 1–7 }`. Each day it is done is ticked once (`habit_check`, one row per habit and day, in the user's time zone).
+
+Each habit comes with its numbers (`habit.stats.ts`): `currentStreak` and `bestStreak` (days in a row it was due and done; for weekly habits, weeks that reached their number, from the user's first day of the week; today, or this week, not done yet does not break it), `consistency` (0–100: due days, or weeks, of the last 30 days done), `doneToday`, `dueToday`, `doneThisWeek`, and `lastDays` (the last 7 days: `{ date, done, due }`).
+
+| Method | Path                               | Notes                                                                                                                 |
+| ------ | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/habits?includeArchived=true` | Oldest first.                                                                                                         |
+| POST   | `/api/habits`                      | `{ title, schedule, description?, color?, workspaceId?, reminderTime?, startDate? }` (`startDate` defaults to today). |
+| GET    | `/api/habits/:id`                  |                                                                                                                       |
+| PATCH  | `/api/habits/:id`                  | Any field above, and `isArchived`.                                                                                    |
+| DELETE | `/api/habits/:id`                  | Its ticks go too.                                                                                                     |
+| PUT    | `/api/habits/:id/days/:date`       | Mark that day done (again changes nothing). Not in the future, nor more than a year back. Returns the habit.          |
+| DELETE | `/api/habits/:id/days/:date`       | Mark it not done. Returns the habit.                                                                                  |
+
+Habits register a notification source (group `habits`, kind `habit_reminder`: its `reminderTime` has come today, it is due today and not done yet; once a day) and a search source (kind `habit`), in `habit.sources.ts`.
 
 ## Search API
 

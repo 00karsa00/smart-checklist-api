@@ -236,3 +236,23 @@ export function assertOptional(
 ): void {
   if (body[field] !== undefined && !check(body[field])) throw validationError(message);
 }
+
+/**
+ * A PATCH guard: only `fields` may be sent (and `isArchived`, true or false,
+ * when `archivable`), at least one of them, each checked by `check`.
+ */
+export function updateGuard(
+  fields: readonly string[],
+  check: (body: Record<string, unknown>) => void,
+  { archivable = false } = {},
+): Guard {
+  const allowed = archivable ? [...fields, "isArchived"] : fields;
+  return (ctx) => {
+    const body = (ctx.body ?? {}) as Record<string, unknown>;
+    rejectUnknownFields(body, allowed, (field) => `Field '${field}' cannot be changed.`);
+    assertAtLeastOne(body, allowed);
+    check(body);
+    assertOptional(body, "isArchived", isBoolean, "Field 'isArchived' must be true or false.");
+    ctx.body = body;
+  };
+}
