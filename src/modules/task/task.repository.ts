@@ -11,6 +11,8 @@ import {
   withTransaction,
 } from "../../infrastructure/database";
 
+import { PlaceFilter, wherePlaced } from "../workspace/place.filter";
+
 import { RepeatRule } from "./task.repeat";
 import { TaskStatus } from "./types/task.type";
 
@@ -39,10 +41,7 @@ export type TaskRow = {
 /** The stored columns a write may set. */
 export type TaskFields = Partial<Omit<TaskRow, "id" | "tagIds" | "createdAt" | "updatedAt">>;
 
-export type TaskFilter = {
-  /** Tasks placed in this workspace directly, or in one of these projects. */
-  placement?: { workspaceId: string; projectIds: string[] };
-  projectId?: string;
+export type TaskFilter = PlaceFilter & {
   categoryId?: string;
   tagId?: string;
   status?: TaskStatus;
@@ -107,12 +106,7 @@ export class TaskRepository {
     offset: number,
     limit: number,
   ): Promise<{ rows: TaskRow[]; count: number }> {
-    const where: Where = { userId, parentId: null };
-    if (filter.placement) {
-      const { workspaceId, projectIds } = filter.placement;
-      requireAny(where, [{ workspaceId }, { projectId: oneOf(projectIds) }]);
-    }
-    if (filter.projectId) where.projectId = filter.projectId;
+    const where = wherePlaced({ userId, parentId: null }, filter);
     if (filter.categoryId) where.categoryId = filter.categoryId;
     if (filter.status) where.status = filter.status;
     else if (!filter.includeDone) where.status = notEqual("done");

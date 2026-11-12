@@ -47,14 +47,7 @@ export class TaskService {
     const { workspaceId, due, from, to, ...rest } = options;
     const now = await this.profiles.now(userId);
     const filter: TaskFilter = { ...rest };
-    if (workspaceId) {
-      await this.workspaces.canUseWorkspace(userId, workspaceId);
-      const projects = await this.workspaces.listProjects(userId, {
-        workspaceId,
-        includeArchived: true,
-      });
-      filter.placement = { workspaceId, projectIds: projects.map((project) => project.id) };
-    }
+    if (workspaceId) filter.placement = await this.workspaces.placesIn(userId, workspaceId);
     if (due) filter.due = dueRange(due, now.date);
     else if (from || to) filter.due = { from, to };
     const { rows, count } = await this.tasks.findPage(userId, filter, pageOffset(page), page.limit);
@@ -81,7 +74,7 @@ export class TaskService {
       }
       place = { parentId, workspaceId: null, projectId: null };
     } else {
-      place = await this.placement(userId, { projectId, workspaceId });
+      place = await this.workspaces.resolvePlace(userId, { projectId, workspaceId });
     }
     const fields = this.fields(rest);
     this.checkRepeat({ ...fields, parentId: parentId ?? null }, fields);
@@ -96,7 +89,10 @@ export class TaskService {
     const fields = this.fields(rest, current);
     if (projectId !== undefined || workspaceId !== undefined) {
       if (current.parentId) throw validationError(SUBTASK_PLACEMENT);
-      Object.assign(fields, await this.placement(userId, { projectId, workspaceId }, current));
+      Object.assign(
+        fields,
+        await this.workspaces.resolvePlace(userId, { projectId, workspaceId }, current),
+      );
     }
     // Clearing the date clears the time; a time on its own makes no sense.
     if (rest.dueDate === null && rest.dueTime === undefined) fields.dueTime = null;
@@ -215,33 +211,6 @@ export class TaskService {
     return fields;
   }
 
-  /**
-   * Where a top-level task goes: a project (its workspace comes from it), or a
-   * workspace. With neither, it stays where it was, or (new) goes to the first workspace.
-   */
-  private async placement(
-    userId: string,
-    wanted: { projectId?: string | null; workspaceId?: string },
-    current?: TaskRow,
-  ): Promise<{ projectId: string | null; workspaceId: string | null }> {
-    if (wanted.projectId) {
-      await this.workspaces.canUseProject(userId, wanted.projectId);
-      return { projectId: wanted.projectId, workspaceId: null };
-    }
-    if (wanted.workspaceId) {
-      await this.workspaces.canUseWorkspace(userId, wanted.workspaceId);
-      return { projectId: null, workspaceId: wanted.workspaceId };
-    }
-    // Taken out of its project (projectId: null): it stays in that project's workspace.
-    if (current?.projectId) {
-      const project = await this.workspaces.canUseProject(userId, current.projectId);
-      return { projectId: null, workspaceId: project.workspaceId };
-    }
-    if (current) return { projectId: null, workspaceId: current.workspaceId };
-    const [first] = await this.workspaces.listWorkspaces(userId);
-    return { projectId: null, workspaceId: first.id };
-  }
-
   private async checkLabels(
     userId: string,
     categoryId: string | null | undefined,
@@ -254,33 +223,25 @@ export class TaskService {
   /** API shape: priority as a word, the workspace filled in, overdue and subtask counts. */
   private async shape(userId: string, rows: TaskRow[], now: Now): Promise<Task[]> {
     if (rows.length === 0) return [];
-    const [projects, counts] = await Promise.all([
-      this.workspaces.listProjects(userId, { includeArchived: true }),
+    const [workspaceOf, counts] = await Promise.all([
+      this.workspaces.workspaceOfPlace(userId),
       this.tasks.subtaskCounts(rows.filter((row) => !row.parentId).map((row) => row.id)),
     ]);
-    const projectWorkspace = new Map(projects.map((project) => [project.id, project.workspaceId]));
     const parentWorkspace = new Map<string, string>();
     for (const row of rows) {
       if (row.parentId && !parentWorkspace.has(row.parentId)) {
-        const parent = await this.canUse(userId, row.parentId);
-        parentWorkspace.set(row.parentId, this.workspaceOf(parent, projectWorkspace));
+        parentWorkspace.set(row.parentId, workspaceOf(await this.canUse(userId, row.parentId)));
       }
     }
     return rows.map((row) => ({
       ...row,
       priority: priorityFromNumber(row.priority),
       status: row.status as TaskStatus,
-      workspaceId: row.parentId
-        ? parentWorkspace.get(row.parentId)!
-        : this.workspaceOf(row, projectWorkspace),
+      workspaceId: row.parentId ? parentWorkspace.get(row.parentId)! : workspaceOf(row),
       tagIds: [...row.tagIds].sort(),
       overdue: isOverdue(row, now),
       subtasks: counts.get(row.id) ?? { done: 0, total: 0 },
     }));
-  }
-
-  private workspaceOf(row: TaskRow, projectWorkspace: ReadonlyMap<string, string>): string {
-    return row.projectId ? projectWorkspace.get(row.projectId)! : row.workspaceId!;
   }
 }
 

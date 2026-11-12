@@ -15,6 +15,9 @@ import { ProjectFilter, workspaceRepository, WorkspaceRepository } from "./works
 import { Project, ProjectSummary, Workspace, WorkspaceSummary } from "./types/workspace.type";
 
 /** What a new user starts with; they can rename or remove them. */
+/** Where a task or note sits: a project, or a workspace directly (exactly one is set). */
+export type Place = { projectId: string | null; workspaceId: string | null };
+
 export const STARTER_WORKSPACES: readonly CreateWorkspaceDto[] = [
   { name: "Personal", color: "#2563EB" },
   { name: "Work", color: "#16A34A" },
@@ -138,6 +141,52 @@ export class WorkspaceService {
     await this.canUseProject(userId, id);
     await this.workspaces.deleteProject(id, userId);
     return null;
+  }
+
+  // ── Places: a project or, directly, a workspace (tasks and notes sit in one) ──
+
+  /**
+   * Where a record goes: a project (its workspace comes from it), or a
+   * workspace. With neither, it stays where it was (taken out of a project,
+   * into that project's workspace), or, when new, goes to the first workspace.
+   */
+  async resolvePlace(
+    userId: string,
+    wanted: { projectId?: string | null; workspaceId?: string },
+    current?: Place,
+  ): Promise<Place> {
+    if (wanted.projectId) {
+      await this.canUseProject(userId, wanted.projectId);
+      return { projectId: wanted.projectId, workspaceId: null };
+    }
+    if (wanted.workspaceId) {
+      await this.canUseWorkspace(userId, wanted.workspaceId);
+      return { projectId: null, workspaceId: wanted.workspaceId };
+    }
+    if (current?.projectId) {
+      const project = await this.canUseProject(userId, current.projectId);
+      return { projectId: null, workspaceId: project.workspaceId };
+    }
+    if (current) return { projectId: null, workspaceId: current.workspaceId };
+    const [first] = await this.listWorkspaces(userId);
+    return { projectId: null, workspaceId: first.id };
+  }
+
+  /** A function giving the workspace a place is in (a project's, or its own). */
+  async workspaceOfPlace(userId: string): Promise<(place: Place) => string> {
+    const projects = await this.listProjects(userId, { includeArchived: true });
+    const byProject = new Map(projects.map((project) => [project.id, project.workspaceId]));
+    return (place) => (place.projectId ? byProject.get(place.projectId)! : place.workspaceId!);
+  }
+
+  /** Records in this workspace directly, or in one of its projects: for list filters. */
+  async placesIn(
+    userId: string,
+    workspaceId: string,
+  ): Promise<{ workspaceId: string; projectIds: string[] }> {
+    await this.canUseWorkspace(userId, workspaceId);
+    const projects = await this.listProjects(userId, { workspaceId, includeArchived: true });
+    return { workspaceId, projectIds: projects.map((project) => project.id) };
   }
 
   /** The project, when the user may use it; 404 otherwise. Other modules call this. */

@@ -27,6 +27,7 @@ export { NotificationModel, NotificationSettingModel } from "./models/notificati
 export { ProjectModel, WorkspaceModel } from "./models/workspace.model";
 export { LabelModel } from "./models/label.model";
 export { TaskModel, TaskTagModel } from "./models/task.model";
+export { NoteItemModel, NoteModel } from "./models/note.model";
 export type {
   LoginLogTable,
   PasswordTable,
