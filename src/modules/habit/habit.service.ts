@@ -1,4 +1,4 @@
-import { addDays, AppError, ERROR_CODES, validationError } from "../../common";
+import { addDays, AppError, deleteChecked, ERROR_CODES, validationError } from "../../common";
 
 import { profileService, ProfileService } from "../profile/profile.service";
 import { workspaceService, WorkspaceService } from "../workspace/workspace.service";
@@ -54,10 +54,11 @@ export class HabitService {
     return this.get(id, userId);
   }
 
-  async delete(id: string, userId: string): Promise<null> {
-    await this.canUse(userId, id);
-    await this.habits.delete(id, userId);
-    return null;
+  delete(id: string, userId: string): Promise<null> {
+    return deleteChecked(
+      () => this.canUse(userId, id),
+      () => this.habits.delete(id, userId),
+    );
   }
 
   /** Mark `date` done (`done`) or not. Not in the future, nor more than a year back. */

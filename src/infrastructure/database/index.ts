@@ -30,6 +30,7 @@ export { TaskModel, TaskTagModel } from "./models/task.model";
 export { NoteItemModel, NoteModel } from "./models/note.model";
 export { GoalMilestoneModel, GoalModel, GoalProjectModel } from "./models/goal.model";
 export { HabitCheckModel, HabitModel } from "./models/habit.model";
+export { TimeEntryModel } from "./models/time-entry.model";
 export type {
   LoginLogTable,
   PasswordTable,

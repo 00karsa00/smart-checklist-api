@@ -1,4 +1,11 @@
-import { AppError, buildPaginatedData, ERROR_CODES, pageOffset, PageRequest } from "../../common";
+import {
+  AppError,
+  buildPaginatedData,
+  deleteChecked,
+  ERROR_CODES,
+  pageOffset,
+  PageRequest,
+} from "../../common";
 
 import { taskService, TaskService } from "../task/task.service";
 import { workspaceService, WorkspaceService } from "../workspace/workspace.service";
@@ -56,10 +63,11 @@ export class NoteService {
     return this.get(id, userId);
   }
 
-  async delete(id: string, userId: string): Promise<null> {
-    await this.canUse(userId, id);
-    await this.notes.delete(id, userId);
-    return null;
+  delete(id: string, userId: string): Promise<null> {
+    return deleteChecked(
+      () => this.canUse(userId, id),
+      () => this.notes.delete(id, userId),
+    );
   }
 
   // ── Checklist ─────────────────────────────────────────────────────────────

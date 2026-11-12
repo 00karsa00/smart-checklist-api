@@ -59,6 +59,7 @@ export {
 
 // Utilities
 export { assignDefined } from "./utils/assign-defined";
+export { deleteChecked } from "./utils/delete-checked";
 export {
   addDays,
   addMonths,

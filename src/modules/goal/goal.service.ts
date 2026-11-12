@@ -1,4 +1,4 @@
-import { AppError, ERROR_CODES } from "../../common";
+import { AppError, deleteChecked, ERROR_CODES } from "../../common";
 
 import { profileService, ProfileService } from "../profile/profile.service";
 import { taskService, TaskService } from "../task/task.service";
@@ -67,10 +67,11 @@ export class GoalService {
     return this.get(id, userId);
   }
 
-  async delete(id: string, userId: string): Promise<null> {
-    await this.canUse(userId, id);
-    await this.goals.delete(id, userId);
-    return null;
+  delete(id: string, userId: string): Promise<null> {
+    return deleteChecked(
+      () => this.canUse(userId, id),
+      () => this.goals.delete(id, userId),
+    );
   }
 
   // ── Milestones ────────────────────────────────────────────────────────────
