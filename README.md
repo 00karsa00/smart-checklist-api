@@ -56,7 +56,7 @@ Run `npm run check` before every commit.
 
 ### API tests
 
-`src/test-e2e/*.e2e.ts` test the API from the outside: each file starts the real app on a free port against the database in `.env` (no running server needed), signs up its own users and admins (names starting with `e2e-`) and removes them when it ends. They cover sign-in and sessions (refresh rotation, a just-replaced token reused within the grace period, a stolen one used after it, the per-account sign-in limit), disabled accounts, sign-up switched off, managing admins and users (roles, self-protection, password resets, login logs), profile, settings, password changes and signed-in devices, workspaces and projects (starter set, unique names, ordering, filters, moving, archiving, the rules for deleting, one user never reaching another's), categories and tags (both kinds, the suggested set), tasks (placement, subtasks, ordering, every filter including a date range, completing, moving, what deleting a project, category, tag or workspace does), repeating tasks (the next copy and its details, once only, finishing late, monthly days, weekdays, stopping), task reminders and due-date alerts (once each, muting, a moved reminder), the dashboard (each list, the counts, project progress, completions per day), search (every kind, ranking, only the user's own records), notes (checklists, ordering, filters, moving, what deleting a task, project or workspace does, search), notifications (sources, read state, muting), and the admin overview and audit log. They are not part of `npm run check`, which needs no database; run `npm run test:e2e` after changing behaviour and before a release. If a run is stopped half-way, `npm run test:cleanup` removes what it left.
+`src/test-e2e/*.e2e.ts` test the API from the outside: each file starts the real app on a free port against the database in `.env` (no running server needed), signs up its own users and admins (names starting with `e2e-`) and removes them when it ends. They cover sign-in and sessions (refresh rotation, a just-replaced token reused within the grace period, a stolen one used after it, the per-account sign-in limit), disabled accounts, sign-up switched off, managing admins and users (roles, self-protection, password resets, login logs), profile, settings, password changes and signed-in devices, workspaces and projects (starter set, unique names, ordering, filters, moving, archiving, the rules for deleting, one user never reaching another's), categories and tags (both kinds, the suggested set), tasks (placement, subtasks, ordering, every filter including a date range, completing, moving, what deleting a project, category, tag or workspace does), repeating tasks (the next copy and its details, once only, finishing late, monthly days, weekdays, stopping), task reminders and due-date alerts (once each, muting, a moved reminder), the dashboard (each list, the counts, project progress, completions per day), search (every kind, ranking, only the user's own records), notes (checklists, ordering, filters, moving, what deleting a task, project or workspace does, search), goals (milestones, progress from linked projects' tasks, statuses, ordering, search), notifications (sources, read state, muting), and the admin overview and audit log. They are not part of `npm run check`, which needs no database; run `npm run test:e2e` after changing behaviour and before a release. If a run is stopped half-way, `npm run test:cleanup` removes what it left.
 
 ## Project structure
 
@@ -453,6 +453,25 @@ User only. A note has a `title`, a `body` (up to 20,000 characters), a checklist
 | DELETE | `/api/notes/:id/items/:itemId`                                                    | Returns the note.                                                                                                            |
 
 Notes are searched too (kind `note`, by title and text).
+
+## Goals API
+
+User only. A goal (`title`, `description`, `color`, `targetDate`, `status`: `active`, `achieved` or `dropped`) sits in a workspace (the first one when left out; a workspace with goals cannot be deleted). It has **milestones** to tick off and may be linked to **projects** working toward it. The links live in the goals module (`goal_project`), so the workspace and task modules know nothing of goals; deleting a project drops its link.
+
+Each goal has `projectIds`, `milestones` and `tasks` (`{ done, total }`; tasks are the linked projects' top-level ones), `progress` (0–100: milestones and linked tasks done out of all of them, rounded down; 100 once achieved; `goal.progress.ts`), `overdue` (active and past its target date), `nextMilestone`, and `achievedAt` (set when marked achieved, cleared when reopened).
+
+| Method | Path                                     | Notes                                                                                                                                              |
+| ------ | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GET    | `/api/goals?status=&workspaceId=`        | Soonest target date first (none last), then the newest.                                                                                            |
+| POST   | `/api/goals`                             | `{ title, description?, color?, workspaceId?, targetDate?, milestones?: string[], projectIds?: string[] }`. Returns the goal with `milestoneList`. |
+| GET    | `/api/goals/:id`                         | With `milestoneList` (`{ id, title, dueDate, done, doneAt, position }`, in order).                                                                 |
+| PATCH  | `/api/goals/:id`                         | Any field above but `milestones`, and `status`. `projectIds` replaces the links.                                                                   |
+| DELETE | `/api/goals/:id`                         | Its milestones and links go too; projects stay.                                                                                                    |
+| POST   | `/api/goals/:id/milestones`              | `{ title, dueDate? }`, added last. Returns the goal.                                                                                               |
+| PATCH  | `/api/goals/:id/milestones/:milestoneId` | `{ title?, dueDate?, done? }`. Returns the goal.                                                                                                   |
+| DELETE | `/api/goals/:id/milestones/:milestoneId` | Returns the goal.                                                                                                                                  |
+
+Goals are searched too (kind `goal`, by title and description).
 
 ## Search API
 

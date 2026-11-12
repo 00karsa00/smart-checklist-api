@@ -14,6 +14,7 @@ export const USAGE_TABLES: Readonly<Record<string, string>> = {
   labels: "label",
   tasks: "task",
   notes: "note",
+  goals: "goal",
   notifications: "notification",
 };
 

@@ -14,6 +14,7 @@ import { taskModule } from "./task/task.module";
 import { dashboardModule } from "./dashboard/dashboard.module";
 import { searchModule } from "./search/search.module";
 import { noteModule } from "./note/note.module";
+import { goalModule } from "./goal/goal.module";
 
 // Every feature the API serves. A new feature is one new line here.
 export const modules: ApiModule[] = [
@@ -32,5 +33,6 @@ export const modules: ApiModule[] = [
   dashboardModule,
   searchModule,
   noteModule,
+  goalModule,
   itemModule,
 ];
